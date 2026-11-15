@@ -13,8 +13,9 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from starlette.concurrency import run_in_threadpool
 
-from api_server import CROPS, _validate_assess_body
+from api_contracts import CROPS, _validate_assess_body
 from live_pipeline import NASAUpstreamError, assess_nasa
+from rotation_engine import compare_rotation_plans, get_rotation_options
 from scoring import score_all_crops
 
 MAX_REQUEST_BYTES = 500_000
@@ -153,6 +154,11 @@ async def nasa_status():
     }
 
 
+@app.get("/api/rotation/options")
+async def rotation_options():
+    return get_rotation_options(CROPS)
+
+
 @app.post("/api/assess")
 async def assess(request: Request):
     try:
@@ -197,5 +203,22 @@ async def nasa_assess(request: Request):
             },
             status_code=502,
         )
+    except (ValueError, KeyError, TypeError) as exc:
+        return _error("invalid_input", str(exc), 400)
+
+
+@app.post("/api/rotation/compare")
+async def rotation_compare(request: Request):
+    """Compare demo or custom three-season plans without scoring suitability."""
+    try:
+        body = await _json_object(request)
+        return await run_in_threadpool(
+            compare_rotation_plans,
+            CROPS,
+            body.get("climate_context"),
+            body.get("plans"),
+        )
+    except RequestInputError as exc:
+        return _error(exc.code, exc.detail, exc.status_code)
     except (ValueError, KeyError, TypeError) as exc:
         return _error("invalid_input", str(exc), 400)

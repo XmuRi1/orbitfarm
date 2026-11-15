@@ -1,4 +1,8 @@
-"""OrbitFarm local development service (stdlib; not production-secure).
+"""Legacy OrbitFarm diagnostic server (stdlib; not production-secure).
+
+The primary local/deployment API is app.py:app (FastAPI, port 8000).
+This server is retained for the old diagnostic HTML page and compatibility tests;
+it does not implement Rotation Planner. See README.md for the primary launcher.
 
 GET /                         small local interface for manual NASA tests
 GET /health                   local service availability (not NASA health)
@@ -13,33 +17,12 @@ import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.error import HTTPError, URLError
-from scoring import read_json, score_all_crops
+from scoring import score_all_crops
+from api_contracts import CROPS, _validate_assess_body
 from live_pipeline import NASAUpstreamError, assess_nasa
 
 HERE = Path(__file__).resolve().parent
-CROPS = read_json(HERE / 'data/crops.json')
 ALLOWED_ORIGINS = {'http://localhost:3000', 'http://127.0.0.1:3000'}
-
-
-def _validate_assess_body(body: dict) -> None:
-    farm = body.get('farm')
-    if not isinstance(farm, dict):
-        raise ValueError('farm must be a JSON object')
-    if not isinstance(farm.get('farm_id'), str) or not farm['farm_id'].strip():
-        raise ValueError('farm.farm_id must be a nonempty string')
-    if not isinstance(farm.get('location'), dict):
-        raise ValueError('farm.location must be a JSON object')
-    observations = farm.get('observations')
-    if not isinstance(observations, list):
-        raise ValueError('farm.observations must be an array')
-    for index, observation in enumerate(observations):
-        if not isinstance(observation, dict):
-            raise ValueError(f'farm.observations[{index}] must be a JSON object')
-        if not isinstance(observation.get('parameter_id'), str):
-            raise ValueError(f'farm.observations[{index}].parameter_id must be a string')
-        for field in ('context', 'source'):
-            if field in observation and observation[field] is not None and not isinstance(observation[field], dict):
-                raise ValueError(f'farm.observations[{index}].{field} must be a JSON object')
 
 
 class Handler(BaseHTTPRequestHandler):

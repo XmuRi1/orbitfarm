@@ -28,6 +28,7 @@ import type {
   Observation,
   SoilObservation,
 } from "@/lib/contracts";
+import RotationPlanner from "@/components/rotation-planner";
 
 const FieldMap = dynamic(() => import("@/components/field-map"), {
   ssr: false,
@@ -411,12 +412,27 @@ export default function Home() {
   const displayCrops = result
     ? [...result.assessment.crops].sort((first, second) => first.name_ru.localeCompare(second.name_ru, "ru"))
     : [];
+  const rotationClimateContext = result
+    ? {
+        historical_period: result.historical_period,
+        location: result.farm.location,
+        source_is_synthetic: result.source_is_synthetic,
+        retrieved_from_cache: result.retrieved_from_cache,
+        observations: result.farm.observations,
+      }
+    : null;
   const currentPoint = parseCoordinates(form.latitude, form.longitude);
   const coordinatesChanged = Boolean(
     result &&
     (!currentPoint ||
       currentPoint[0] !== result.farm.location.latitude ||
       currentPoint[1] !== result.farm.location.longitude),
+  );
+  const rotationContextStale = Boolean(
+    result &&
+    (coordinatesChanged ||
+      form.start !== result.historical_period.start ||
+      form.end !== result.historical_period.end),
   );
 
   return (
@@ -665,6 +681,12 @@ export default function Home() {
           )}
         </section>
       </div>
+
+      <RotationPlanner
+        key={result ? `${result.farm.location.latitude}-${result.farm.location.longitude}-${result.historical_period.start}-${result.historical_period.end}` : "no-climate-context"}
+        climateContext={rotationClimateContext}
+        contextStale={rotationContextStale}
+      />
 
       <footer className="page-footer">
         <span><Leaf size={14} /> OrbitFarm Field Lab</span>

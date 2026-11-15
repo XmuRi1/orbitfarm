@@ -1,22 +1,29 @@
 # OrbitFarm Backend — локальный MVP
 
-Это локальная документация Python HTTP API, сохранённая вместе с кодом backend. Для корневого quickstart, serverless ограничений и настройки двух Vercel Projects см. [README проекта](../README.md).
+Канонический API для локального запуска и Vercel — `app.py:app` (FastAPI). Весь Python-код, данные и тесты находятся в `backend/`. Для корневого quickstart, serverless ограничений и настройки двух Vercel Projects см. [README проекта](../README.md).
 
 Этот пакет расширяет уже работающий движок OrbitFarm. Он делает **реальный запрос исторических данных NASA POWER на компьютере пользователя**, приводит ответ к каноническим `parameter_id` и запускает демонстрационную оценку 10 культур. При недоступности NASA ошибка отображается явно; **никакой замены реальных значений синтетическими нет**.
 
 **Проверка NASA:** живой сквозной запрос NASA POWER выполнялся для тестового региона Беэр-Шевы. Текущие тесты используют синтетические данные или mock и не обращаются к NASA.
 
-## 1. Запуск на Windows — 3 шага
+## 1. Запуск FastAPI на Windows
 
-1. Распаковать архив **полностью** в отдельную папку `OrbitFarm_NASA_Live_MVP`.
-2. Если ранее запущен старый сервер `python api_server.py`, остановить его в старом терминале нажатием **Ctrl+C**. Иначе новый сервер не сможет занять порт 8765.
-3. В терминале, открытом в новой папке, выполнить:
+Из корня репозитория создайте окружение (если `backend/.venv` ещё нет) и установите зависимости:
 
 ```powershell
-python api_server.py
+python -m venv backend/.venv
+.\backend\.venv\Scripts\python.exe -m pip install -r backend/requirements-local.txt -r backend/requirements-test.txt
 ```
 
-В браузере открыть **http://127.0.0.1:8765/**. В новой версии этот адрес открывает **не JSON `not_found`, а локальную страницу управления**. Можно также дважды щёлкнуть `start_api_windows.bat`.
+В новом терминале из корня репозитория запустите API без активации окружения:
+
+```powershell
+.\backend\.venv\Scripts\python.exe -m uvicorn app:app --app-dir backend --host 127.0.0.1 --port 8000 --reload
+```
+
+Проверка процесса: **http://127.0.0.1:8000/health**. Можно также запустить `backend/start_api_windows.bat`: он использует то же окружение и FastAPI на порту 8000, без reload. Основной интерфейс — Next.js на **http://127.0.0.1:3000**, его настройка описана в корневом README. Укажите `ORBITFARM_BACKEND_URL=http://127.0.0.1:8000` в `frontend/.env.local`.
+
+Старый `backend/api_server.py` сохранён для совместимости с диагностической HTML-страницей на порту 8765 и её тестами. Он не поддерживает Rotation Planner и не используется основным интерфейсом. Корневой `api_server.py` — короткий запускатель FastAPI на порту 8000. Общая загрузка каталога и валидация вынесены в `api_contracts.py`; FastAPI не зависит от старого HTTP-сервера.
 
 В интерфейсе есть тестовые координаты **31.25, 34.79 (регион Беэр-Шевы, не точка конкретного поля)** и пример периода **01.01.2025 — 31.03.2025**. Нажми «Получить климат NASA и рассчитать». Сервер сделает запрос к NASA; повторное обращение к той же точке и датам сможет взять локальный кэш.
 
@@ -37,7 +44,7 @@ Farm Observations (реальные климатические данные, soi
   ↓
 scoring.py → сопоставление с requirements 10 культур
   ↓
-HTTP JSON для локальной страницы и интерфейса OrbitFarm
+FastAPI → Next.js proxy → интерфейс OrbitFarm
 ```
 
 Параметры в `farm.observations`:
@@ -55,7 +62,7 @@ HTTP JSON для локальной страницы и интерфейса Orb
 
 ## 3. API — один запрос до всех 10 оценок
 
-`POST http://127.0.0.1:8765/api/nasa/assess`
+`POST http://127.0.0.1:8000/api/nasa/assess`
 
 Тело запроса: `examples/nasa_request_beersheba_example.json`
 
@@ -72,13 +79,13 @@ HTTP JSON для локальной страницы и интерфейса Orb
 }
 ```
 
-Проверка в PowerShell (в папке приложения):
+Проверка в PowerShell (в папке `backend/`):
 
 ```powershell
 $body = Get-Content 'examples/nasa_request_beersheba_example.json' -Raw
-Invoke-RestMethod -Uri 'http://127.0.0.1:8765/api/nasa/assess' `
+Invoke-RestMethod -Uri 'http://127.0.0.1:8000/api/nasa/assess' `
     -Method Post -ContentType 'application/json' -Body $body |
-    ConvertTo-Json -Depth 30 | Out-File -Encoding utf8 'outputs/nasa_live_response.json'
+    ConvertTo-Json -Depth 30
 ```
 
 Результат содержит:
@@ -88,10 +95,10 @@ Invoke-RestMethod -Uri 'http://127.0.0.1:8765/api/nasa/assess' `
 - `source_url` и `retrieved_from_cache`: ссылка на фактически запрошенный endpoint и использование локального кэша.
 - `warnings`: объяснения ограничений.
 
-Для фронтенда пример локального `fetch`:
+В браузере Next.js вызывайте относительный proxy-маршрут:
 
 ```js
-const response = await fetch('http://127.0.0.1:8765/api/nasa/assess', {
+const response = await fetch('/api/assess', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
@@ -105,12 +112,14 @@ const {farm, assessment} = await response.json();
 console.log(farm.observations, assessment.crops);
 ```
 
-CORS разрешён **только для локального Next.js** на `localhost:3000` или `127.0.0.1:3000`. Адрес `127.0.0.1` доступен **только с того же компьютера**, поэтому этот Python API нельзя напрямую подключить к публичному `orbitfarm.vercel.app`. Для Vercel понадобится деплоить отдельный backend либо переносить adapter в серверную часть Next.js.
+Браузер обращается к Next.js, а серверные proxy-маршруты — к FastAPI, поэтому CORS основному интерфейсу не нужен. В Vercel backend и frontend разворачиваются отдельными проектами; frontend получает HTTPS-адрес backend через серверную переменную `ORBITFARM_BACKEND_URL`.
 
-## 4. CLI — без веб-интерфейса
+FastAPI также предоставляет `GET /api/crops`, `GET /api/nasa/status` и `POST /api/assess` (готовые farm observations). Для севооборотов используются `GET /api/rotation/options` и `POST /api/rotation/compare`; Next.js проксирует их с теми же путями. Два пользовательских плана по три сезона и три демопримера работают через единый API. Существующие поля `schema_version=1.0.0`, `pipeline=orbitfarm_rotation_planner_v1`, `mode=descriptive_no_score` и статусы `unknown` сохранены; подробные тела запросов см. в корневом README.
+
+## 4. CLI — без веб-интерфейса (из `backend/`)
 
 ```powershell
-python main.py nasa-assess --lat 31.25 --lon 34.79 `
+.\.venv\Scripts\python.exe main.py nasa-assess --lat 31.25 --lon 34.79 `
   --start 2025-01-01 --end 2025-03-31 --stage active_growth `
   --mode demo --output outputs/my_nasa_assessment.json
 ```
@@ -133,16 +142,18 @@ python main.py nasa-assess --lat 31.25 --lon 34.79 `
 
 ## 7. Диагностика
 
-- `http://127.0.0.1:8765/health` — жив ли локальный сервер; это **не** проверка NASA.
-- `http://127.0.0.1:8765/api/crops` — все 10 культур.
-- `http://127.0.0.1:8765/api/nasa/status` — описание текущей интеграции и кэша.
+- `http://127.0.0.1:8000/health` — жив ли FastAPI; это **не** проверка NASA.
+- `http://127.0.0.1:8000/api/crops` — все 10 культур.
+- `http://127.0.0.1:8000/api/nasa/status` — описание текущей интеграции и кэша.
+- `http://127.0.0.1:8000/api/rotation/options` — каталог и демопримеры севооборотов.
 - Если порт занят: остановить старый сервер (Ctrl+C), новый не стартует поверх него.
 - Если появится `nasa_upstream_unavailable`: интернет, DNS, доступность NASA, размер дат и метаданные ответа. **Синтетический fallback отсутствует**.
-- Тесты: `python -m unittest discover -s tests -v`.
+- Полный набор тестов из корня: `.\backend\.venv\Scripts\python.exe -B -m unittest discover -s backend/tests -v`.
+- После production-сборки frontend: `.\backend\.venv\Scripts\python.exe -B backend/tests/smoke_local_stack.py` из корня запускает оба сервера на временных портах, проверяет HTTP-маршруты и proxy севооборотов и завершает свои процессы. Живой NASA не вызывается.
 
 Официальные ссылки:
 
 - https://power.larc.nasa.gov/docs/services/api/temporal/daily/
 - https://power.larc.nasa.gov/docs/services/api/temporal/
 
-Разработано как **локальный учебный MVP** для NASA Space Apps Challenge. Нет аутентификации, ограничений частоты запросов и production-hardening; не публиковать этот `http.server` как публичный backend.
+Разработано как **учебный MVP** для NASA Space Apps Challenge. В FastAPI есть ограничение размера запроса и частоты NASA-запросов на экземпляр процесса, но нет аутентификации или общей распределённой квоты. Для публичного трафика нужны внешние ограничения; сохранённый диагностический `http.server` публиковать нельзя.

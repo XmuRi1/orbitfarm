@@ -14,15 +14,15 @@ From this directory, install dependencies and configure the server-side backend 
 
 ```powershell
 npm install
-Copy-Item .env.example .env.local
+if (-not (Test-Path .env.local)) { Copy-Item .env.example .env.local }
 ```
 
-Keep `ORBITFARM_BACKEND_URL` in `.env.local` set to the Python API origin. For local development use `http://127.0.0.1:8765`; in Vercel set it to the deployed backend URL. This value is only read by the Next.js server. Browser code calls `/api/assess`, never the Python API directly.
+Keep `ORBITFARM_BACKEND_URL` in `.env.local` set to the FastAPI origin. For local development use `http://127.0.0.1:8000`; in Vercel set it to the deployed backend URL. This value is only read by the Next.js server. Browser code calls relative Next.js routes, never the Python API directly. Restart Next.js after changing the variable.
 
-Start the backend from the repository root:
+Set up the backend venv and dependencies as described in the [root README](../README.md), then start FastAPI from the repository root:
 
 ```powershell
-py -3.15 backend/api_server.py
+.\backend\.venv\Scripts\python.exe -m uvicorn app:app --app-dir backend --host 127.0.0.1 --port 8000 --reload
 ```
 
 Then start the frontend from `frontend/`:
@@ -36,6 +36,10 @@ Open http://localhost:3000.
 ## API route
 
 `POST /api/assess` forwards the JSON request to `${ORBITFARM_BACKEND_URL}/api/nasa/assess` from the Next.js server. It passes through backend JSON and status codes, while reporting a missing backend configuration, connection failure, or invalid backend JSON separately.
+
+`GET /api/rotation/options` and `POST /api/rotation/compare` forward to the same paths on FastAPI. The planner supports two user-defined three-season plans and the original three demo plans. Results remain descriptive with no rotation score; future climate suitability remains `unknown`. The legacy stdlib server on port 8765 does not support these routes.
+
+Run `npm run lint`, `npx tsc --noEmit --incremental false`, and `npm run build` here. After building, run `backend/tests/smoke_local_stack.py` with the backend venv from the repository root for an HTTP test of the complete local stack; see the root README.
 
 ## Result semantics
 
