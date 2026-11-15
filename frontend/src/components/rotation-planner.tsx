@@ -11,6 +11,7 @@ import type {
 } from "@/lib/contracts";
 import { analysisErrorText, requestJSON, stableKey } from "@/lib/analysis-session";
 import { useAnalysisSession } from "@/lib/use-analysis-session";
+import { differentPlanMetrics, planMetrics, resultNumber } from "@/lib/result-presentation";
 
 interface RotationPlannerProps {
   climateContext: RotationClimateContext | null;
@@ -110,16 +111,16 @@ function RotationFindingList({ title, findings, emptyText, cropNames = {} }: {
   );
 }
 
-function PlanCard({ plan, cropNames = {} }: { plan: RotationPlan; cropNames?: Record<string, string> }) {
+function PlanCard({ plan, cropNames = {}, different = [] }: { plan: RotationPlan; cropNames?: Record<string, string>; different?: string[] }) {
   const indicators = plan.indicators;
-  const legumeLabel = indicators.legume_presence.present === null
+  const legumeLabel = indicators.legume_presence.status === "unknown" || indicators.legume_presence.present === null
     ? "Неизвестно"
     : indicators.legume_presence.present
       ? `Есть · сезоны ${indicators.legume_presence.seasons?.join(", ")}`
       : "Нет";
   const diversityLabel = indicators.sequence_diversity.status === "unknown"
     ? "Неизвестно"
-    : `${indicators.sequence_diversity.distinct_crop_count} разных crop_id из ${indicators.sequence_diversity.season_count}`;
+    : `${indicators.sequence_diversity.distinct_crop_count} разных культур из ${indicators.sequence_diversity.season_count}`;
   const adjacentCropRepeats = indicators.crop_repetition.adjacent_repeats;
   const cropReturns = indicators.crop_repetition.return_after_intermediate;
   const adjacentFamilyRepeats = indicators.family_repetition.adjacent_repeats;
@@ -161,6 +162,8 @@ function PlanCard({ plan, cropNames = {} }: { plan: RotationPlan; cropNames?: Re
         ))}
       </div>
 
+      <dl className="plan-key-indicators">{planMetrics(plan).map(metric => <div key={metric.key} data-different={different.includes(metric.key) || undefined}><dt>{metric.label}</dt><dd>{typeof metric.value === "boolean" ? metric.value ? "Есть" : "Нет" : resultNumber(metric.value)}</dd></div>)}</dl>
+      <details className="provenance-details plan-explanations"><summary>Полное объяснение плана, семейства и источники</summary>
       <dl className="rotation-indicators">
         <div>
           <dt>Повтор культуры подряд</dt>
@@ -211,6 +214,7 @@ function PlanCard({ plan, cropNames = {} }: { plan: RotationPlan; cropNames?: Re
       <details className="rotation-limitations">
         <summary>Ограничения интерпретации</summary>
         <ul>{plan.limitations.map((limitation) => <li key={limitation}>{limitation}</li>)}</ul>
+      </details>
       </details>
     </article>
   );
@@ -370,8 +374,9 @@ export default function RotationPlanner({ climateContext, contextStale, analysis
           </div>
 
           <div className={`rotation-plan-grid rotation-plan-count-${comparison.plans.length}`}>
-            {comparison.plans.map((plan) => <PlanCard plan={plan} cropNames={cropNames} key={plan.plan_id} />)}
+            {comparison.plans.map((plan) => <PlanCard plan={plan} cropNames={cropNames} different={differentPlanMetrics(comparison.plans)} key={plan.plan_id} />)}
           </div>
+          <p className="field-hint">Акцентом отмечены известные различия планов, без оценки «лучше/хуже».</p>
 
           <ul className="rotation-comparison-limitations">
             {comparison.comparison_limitations.map((limitation) => <li key={limitation}>{limitation}</li>)}

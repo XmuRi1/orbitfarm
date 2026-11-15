@@ -39,6 +39,9 @@ import { analysisErrorText, contextKey, currentPublication, requestJSON, stableK
 import { useAnalysisSession } from "@/lib/use-analysis-session";
 import { seasonClimateContext } from "@/lib/experience-summary";
 import FirstRunExperience from "@/components/first-run-experience";
+import JourneyNavigation from "@/components/journey-navigation";
+import { revealDetailsFromLink } from "@/lib/reveal-details";
+import { siteReadiness } from "@/lib/result-presentation";
 import { emptyScenarioDrafts, reconcileDrafts, makeWaterBody, makeRootBody, type ScenarioBindings } from "@/lib/scenario-inputs";
 import { DEMO_CONTEXT, confirmedDemoDrafts, runGuidedDemo } from "@/lib/guided-demo";
 
@@ -422,7 +425,9 @@ export default function Home() {
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault(); cancelDemo(); setDemoSeason(null); clearDependentResults();
+    event.preventDefault();
+    if (siteReadiness(form, Boolean(options)).length) return;
+    cancelDemo(); setDemoSeason(null); clearDependentResults();
     await seasonRequest.run(() => requestJSON<SeasonAssessment>("/api/season/assess", {
       crop_id: form.cropId, latitude: Number(form.latitude), longitude: Number(form.longitude),
       sowing_date: form.start, end_date: form.end,
@@ -461,10 +466,11 @@ export default function Home() {
     rootSeed: root && rootReport ? { key: rootReport.rootAssumptions, value: root } : null };
   const rotation = rotationReport?.token === rotationToken ? rotationReport.value : null;
   const currentPoint = parseCoordinates(form.latitude, form.longitude);
+  const siteMissing = siteReadiness(form, Boolean(options));
   const coordinatesChanged = Boolean(result && (!currentPoint || currentPoint[0] !== result.farm.location.latitude || currentPoint[1] !== result.farm.location.longitude));
 
   return (
-    <main className="app-shell ux-polish">
+    <main className="app-shell ux-polish design-v1">
       <header className="topbar">
         <a className="brand" href="#top" aria-label="OrbitFarm, главная">
           <span className="brand-mark"><Leaf size={19} strokeWidth={2.2} /></span>
@@ -492,10 +498,7 @@ export default function Home() {
       <FirstRunExperience open={demoOpen} onOpen={setDemoOpen} accepted={demoAccepted} onAccepted={setDemoAccepted}
         onStart={() => { void startDemo(); }} loading={demoRequest.loading} progress={demoProgress} error={analysisErrorText(demoRequest.error)} />
 
-      <nav className="journey-nav" aria-label="Этапы анализа">
-        <a href="#site">01 · Участок</a><a href="#climate-water">02 · Климат и вода</a>
-        <a href="#rotation-planner">03 · Севооборот</a><a href="#analysis-summary">04 · Итоги</a>
-      </nav>
+      <JourneyNavigation />
 
       <div className="dashboard-grid">
         <aside className="control-rail" id="site">
@@ -553,7 +556,7 @@ export default function Home() {
               {catalogueError && <p className="error-message" role="alert">{catalogueError}</p>}
             </div>
 
-            <details className="provenance-details site-expert">
+            <details className="provenance-details site-expert" id="site-expert">
               <summary>Свойства почвы и экспертное сопоставление</summary>
             <div className="form-section">
               <div className="section-label"><Wind size={15} /><span>Сценарий оценки</span></div>
@@ -598,11 +601,14 @@ export default function Home() {
               <p className="field-hint">Ответ доступен в раскрываемых деталях раздела 02. Демонстрационные баллы не являются научной рекомендацией.</p>
             </details>
 
-            <button className="submit-button" type="submit" disabled={seasonRequest.loading || demoRequest.loading || !options || !currentPoint}>
+            <div className="site-submit-area">
+            {siteMissing.length > 0 && <p className="form-readiness" id="site-readiness" role="status">{siteMissing.join(" ")}</p>}
+            <button className={seasonResult ? "rotation-examples-button" : "submit-button"} type="submit" aria-describedby={siteMissing.length ? "site-readiness" : undefined} disabled={seasonRequest.loading || demoRequest.loading || siteMissing.length > 0}>
               {seasonRequest.loading ? <LoaderCircle className="spin" size={17} /> : <CloudSun size={17} />}
-              {seasonRequest.loading ? "Получаем сезон…" : "Проанализировать сезон"}
+              {seasonRequest.loading ? "Получаем сезон…" : seasonResult ? "Повторить сезонный анализ" : "Проанализировать сезон"}
               {!seasonRequest.loading && <ArrowRight size={16} />}
             </button>
+            </div>
           </form>
 
           {errorMessage && (
@@ -624,25 +630,10 @@ export default function Home() {
             onWaterResult={(value, assumptions = "") => { setWaterReport(value ? { scope, assumptions, value } : null); setRootReport(null); }}
             onRootResult={(value, assumptions = "", rootAssumptions = "") => setRootReport(value ? { scope, assumptions, rootAssumptions, value } : null)} />
           <details className="provenance-details legacy-analysis"><summary>Экспертное сопоставление культур и агрегаты NASA</summary>
-          <p className="field-hint">Запускается отдельно в экспертных настройках участка. Старые API и JSON-экспорт сохранены.</p>
+          <p className="field-hint">Отдельный экспертный анализ факторов культур. Использует текущие координаты и период; сезонный и водный результаты его не запускают.</p>
           {legacyRequest.reused && <p className="field-hint">Повторно использован ответ для тех же параметров экспертного запроса.</p>}
           {!result && !isLoading && !errorMessage && (
-            <div className="welcome-state">
-              <div className="welcome-art" aria-hidden="true">
-                <div className="art-sun" />
-                <div className="art-horizon" />
-                <div className="art-row row-one" />
-                <div className="art-row row-two" />
-                <div className="art-row row-three" />
-                <span className="art-coordinate">31°15&apos; N<br />34°47&apos; E</span>
-              </div>
-              <div className="welcome-copy">
-                <span className="status-kicker"><span className="service-dot" /> READY FOR ANALYSIS</span>
-                <h2>Климат участка<br />в контексте культур</h2>
-                <p>Введите координаты и исторический период. OrbitFarm запросит данные NASA POWER и покажет, какие факторы доступны для сопоставления.</p>
-                <div className="welcome-foot"><span>10 культур</span><span>6 климатических показателей</span><span>Без синтетического fallback</span></div>
-              </div>
-            </div>
+            <div className="expert-empty"><strong>Экспертное сопоставление ещё не запускалось</strong><p>Данные участка уже указаны в разделе 01. Повторно вводить их не нужно.</p><a className="download-button" href="#site-expert" onClick={event => revealDetailsFromLink(event, "site-expert")}>Открыть экспертные настройки</a></div>
           )}
 
           {isLoading && (

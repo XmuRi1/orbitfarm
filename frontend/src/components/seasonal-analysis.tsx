@@ -7,6 +7,7 @@ import type { RootZoneComparison } from "@/lib/root-zone-contracts";
 import type { SeasonAssessment } from "@/lib/season-contracts";
 import WaterDemand from "@/components/water-demand";
 import type { ScenarioBindings } from "@/lib/scenario-inputs";
+import { groupRequirementReasons } from "@/lib/result-presentation";
 
 const metricLabels: Record<string, string> = {
   mean_temperature: "Средняя температура", minimum_temperature: "Минимальная температура",
@@ -32,6 +33,18 @@ export default function SeasonalAnalysis({ result, loading, error, reused, onWat
 }) {
   const [dailyParameter, setDailyParameter] = useState("CLIM_001");
   const dailySeries = result?.daily.parameters.find((series) => series.parameter_id === dailyParameter);
+  function metricCard(name: string, primary = false) {
+    if (!result) return null;
+    const metric = result.metrics[name];
+    const Icon = metricIcons[name as keyof typeof metricIcons] ?? CloudSun;
+    return <article className={`metric-cell${primary ? " climate-key-metric" : ""}${metric.value === null ? " is-missing" : ""}`} key={name}>
+      <div className="metric-top"><Icon size={18} /><span>{metricLabels[name] ?? name}</span></div>
+      {metric.value === null ? <span className="metric-empty">{metric.days_available === 0 ? "Нет данных" : "Полное значение неизвестно"}</span> : <span className="metric-value">{format.format(metric.value)} <small>{units[metric.unit] ?? metric.unit}</small></span>}
+      {metric.status !== "complete" && <small className="metric-coverage">{metric.days_available}/{metric.days_expected} дней · {metric.status === "partial" ? "Только доступные дни" : "Наблюдений нет"}</small>}
+      {metric.value === null && metric.observed_value !== null && <p className="season-partial">По доступным дням: {format.format(metric.observed_value)} {units[metric.unit] ?? metric.unit}</p>}
+      {metric.reason && <p className="season-metric-reason">{metric.reason}</p>}
+    </article>;
+  }
 
   function download() {
     if (!result) return;
@@ -55,19 +68,10 @@ export default function SeasonalAnalysis({ result, loading, error, reused, onWat
             <div className="section-title-row"><div><p className="eyebrow">ИСТОРИЧЕСКИЙ АНАЛИЗ ЗАВЕРШЁН</p><h3>{result.crop.name_ru} · {result.season.duration_days} дней</h3></div></div>
             <div className="result-meta"><span><CalendarDays size={14} />{result.season.sowing_date} — {result.season.end_date}</span><span><MapPin size={14} />{result.location.latitude}, {result.location.longitude}</span></div>
             <div className="source-banner"><div className="source-check"><Check size={14} /></div><div><strong>{result.source_is_synthetic ? "Синтетическая тестовая фикстура" : "NASA POWER · исторические наблюдения"}</strong><span>{result.retrieved_from_cache ? "Получено из кэша" : "Получено от источника"} · местное солнечное время LST · не прогноз</span></div>{result.source.url && <a href={result.source.url} target="_blank" rel="noreferrer" aria-label="Открыть источник сезонных данных NASA"><ArrowRight size={16} /></a>}</div>
-            <div className="season-coverage"><div><strong>Полнота наблюдений</strong><span>{result.coverage.complete_days} из {result.coverage.expected_days} дней содержат все шесть параметров</span></div><strong>{format.format(result.coverage.fraction * 100)}%</strong></div>
-            <p className="field-hint season-coverage-note">Доля доступных ежедневных значений, не научная уверенность.</p>
-            <div className="metric-grid season-metrics">{Object.entries(result.metrics).map(([name, metric]) => {
-              const Icon = metricIcons[name as keyof typeof metricIcons] ?? CloudSun;
-              return <article className={`metric-cell${metric.value === null ? " is-missing" : ""}`} key={name}>
-                <div className="metric-top"><Icon size={16} /><span>{metric.days_available}/{metric.days_expected} дней</span></div>
-                <p>{metricLabels[name] ?? name}</p>
-                {metric.value === null ? <span className="metric-empty">{metric.days_available === 0 ? "Нет данных" : "Полное значение неизвестно"}</span> : <span className="metric-value">{format.format(metric.value)} <small>{units[metric.unit] ?? metric.unit}</small></span>}
-                <small className="metric-coverage">{metric.status === "complete" ? "Полные наблюдения" : metric.status === "partial" ? "Только доступные дни" : "Наблюдений нет"}</small>
-                {metric.value === null && metric.observed_value !== null && <p className="season-partial">По доступным дням: {format.format(metric.observed_value)} {units[metric.unit] ?? metric.unit}</p>}
-                {metric.reason && <p className="season-metric-reason">{metric.reason}</p>}
-              </article>;
-            })}</div>
+            <div className="climate-primary">{metricCard("mean_temperature", true)}{metricCard("total_precipitation", true)}
+              <article className="climate-completeness"><p>Полнота наблюдений NASA</p><strong>{format.format(result.coverage.fraction * 100)}<small>%</small></strong><span>{result.coverage.complete_days} из {result.coverage.expected_days} дней содержат все шесть параметров</span><small>Доля доступных значений, не научная уверенность.</small></article>
+            </div>
+            <details className="provenance-details climate-secondary"><summary>Ещё пять климатических показателей</summary><div className="metric-grid season-metrics">{Object.keys(result.metrics).filter(name => name !== "mean_temperature" && name !== "total_precipitation").map(name => metricCard(name))}</div></details>
             <details className="provenance-details season-details"><summary>Экспертные подробности сезона и JSON</summary><div className="season-detail-body">
               <button type="button" className="download-button" onClick={download}><ArrowDownToLine size={15} /> JSON</button>
             <details className="provenance-details season-details"><summary>Ежедневные наблюдения и пропуски <ChevronDown size={15} /></summary><div className="season-detail-body">
@@ -75,7 +79,14 @@ export default function SeasonalAnalysis({ result, loading, error, reused, onWat
               <label className="field-label select-label season-series-select"><span>Показатель ежедневного ряда</span><select value={dailyParameter} onChange={(event) => setDailyParameter(event.target.value)}>{result.daily.parameters.map((series) => <option key={series.parameter_id} value={series.parameter_id}>{series.nasa_parameter} · {series.unit}</option>)}</select></label>
               {dailySeries && <div className="season-daily" tabIndex={0} role="region" aria-label="Таблица ежедневных наблюдений"><table><thead><tr><th scope="col">Дата</th><th scope="col">{dailySeries.unit}</th><th scope="col">Наблюдение</th></tr></thead><tbody>{dailySeries.values.map((row) => <tr key={row.date}><td>{row.date}</td><td>{row.value === null ? "—" : format.format(row.value)}</td><td>{row.missing_reason ? missingReasons[row.missing_reason] ?? row.missing_reason : "Доступно"}</td></tr>)}</tbody></table></div>}
             </div></details>
-            <details className="provenance-details season-details"><summary>Требования культуры и неизвестные значения <ChevronDown size={15} /></summary><div className="season-detail-body"><p className="field-hint">Пригодность не рассчитана. Справочные диапазоны не являются подтверждёнными критическими границами.</p>{result.crop_requirements.map((requirement) => <div key={requirement.parameter_id} className="season-requirement"><strong>{requirement.parameter_id}</strong>{requirement.reference && <span> · Справочный диапазон: {requirement.reference.min}–{requirement.reference.max} {units[requirement.reference.unit] ?? requirement.reference.unit}</span>}<p>{requirement.comparison ? requirement.comparison === "within_reference" ? "В пределах совместимого справочного диапазона." : "Вне совместимого справочного диапазона." : "Сопоставление неизвестно (unknown)."} {requirement.reasons.join(" ")}</p></div>)}</div></details>
+            <details className="provenance-details season-details"><summary>Требования культуры и неизвестные значения <ChevronDown size={15} /></summary><div className="season-detail-body">
+              <p className="field-hint">Пригодность не рассчитана. Справочные диапазоны не являются подтверждёнными критическими границами.</p>
+              <ul className="grouped-reasons">{groupRequirementReasons(result.crop_requirements).map(group => <li key={group.reason}>{group.reason}<small>Параметры: {group.parameters.join(", ")}</small></li>)}</ul>
+              <details className="provenance-details"><summary>Диапазоны и статус каждого параметра</summary>{result.crop_requirements.map(requirement => <div key={requirement.parameter_id} className="season-requirement">
+                <strong>{requirement.parameter_id}</strong>{requirement.reference && <span> · Справочный диапазон: {requirement.reference.min}–{requirement.reference.max} {units[requirement.reference.unit] ?? requirement.reference.unit}</span>}
+                <p>{requirement.comparison ? requirement.comparison === "within_reference" ? "В пределах совместимого справочного диапазона." : "Вне совместимого справочного диапазона." : "Сопоставление неизвестно (unknown)."}</p>
+              </div>)}</details>
+            </div></details>
             <details className="provenance-details season-details"><summary>Ограничения анализа <ChevronDown size={15} /></summary><ul className="season-limitations">{result.limitations.map((limitation) => <li key={limitation}>{limitation}</li>)}</ul></details>
             </div></details>
             <WaterDemand season={result} onResult={onWaterResult} onRootResult={onRootResult} bindings={bindings} />

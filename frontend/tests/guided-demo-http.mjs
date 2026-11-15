@@ -20,6 +20,20 @@ const rootBody = makeRootBody(waterBody, preset.root), stages = {};
 const html = await (await fetch(base)).text();
 assert.ok(html.includes('Попробовать на примере Беэр-Шевы'));
 assert.ok(html.includes('id="first-run"'));
+assert.ok(html.includes('design-v1'));
+// SSR precedes client-side catalogue loading; crop readiness is tested after loading in unit tests.
+assert.ok(html.includes('Дождитесь загрузки каталога культур.'));
+assert.ok(html.includes('aria-current="step"'));
+assert.ok(!html.includes('READY FOR ANALYSIS'));
+const seasonAction = html.indexOf('Проанализировать сезон');
+assert.match(html.slice(html.lastIndexOf('<button', seasonAction), seasonAction).split('>')[0], /disabled=""/);
+const cssPaths = [...html.matchAll(/<link[^>]+href="([^"]+\.css(?:\?[^"]*)?)"[^>]*>/g)].map(match => match[1]);
+assert.ok(cssPaths.length > 0);
+const styles = await Promise.all(cssPaths.map(async path => {
+  const response = await fetch(new URL(path.replaceAll('&amp;', '&'), base));
+  assert.equal(response.status, 200); return response.text();
+}));
+assert.ok(styles.join('').includes('.design-v1.ux-polish'));
 // Acceptance is false on first render; the launch button must initially be disabled.
 const launchLabel = html.indexOf('Запустить подтверждённый пример');
 assert.ok(launchLabel > 0);

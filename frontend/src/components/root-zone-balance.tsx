@@ -7,6 +7,8 @@ import type { RootZoneComparison, RootZoneDay } from "@/lib/root-zone-contracts"
 import { analysisErrorText, requestJSON, stableKey } from "@/lib/analysis-session";
 import { useAnalysisSession } from "@/lib/use-analysis-session";
 import { makeRootBody, type RootDraft, type RootFormDraft, type IrrigationDraft } from "@/lib/scenario-inputs";
+import ScenarioHighlights from "@/components/scenario-highlights";
+import SourceField from "@/components/source-field";
 
 const format = new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 2 });
 const show = (value: number | null) => value === null ? "—" : format.format(value);
@@ -17,12 +19,13 @@ const fields = [
   { key: "p", label: "Допустимое истощение p, доля < 1" },
 ] as const;
 
-function DepletionChart({ result }: { result: RootZoneComparison }) {
+export function DepletionChart({ result }: { result: RootZoneComparison }) {
   const a = result.scenarios.rainfed.daily;
   const b = result.scenarios.irrigated.daily;
   const { taw_mm: taw, raw_mm: raw } = result.soil;
-  const x = (i: number) => 54 + i / Math.max(1, a.length - 1) * 610;
-  const y = (dr: number) => 25 + dr / taw * 180;
+  const x = (i: number) => 65 + i / Math.max(1, a.length - 1) * 820;
+  // Presentation only: greater depletion is higher on the axis. API values unchanged.
+  const y = (dr: number) => 25 + (1 - dr / taw) * 155;
   function path(rows: RootZoneDay[]) {
     let active = false;
     return rows.map((row, i) => {
@@ -32,22 +35,24 @@ function DepletionChart({ result }: { result: RootZoneComparison }) {
     }).join(" ");
   }
   return <figure className="root-zone-figure">
-    <figcaption>Ежедневное истощение Dr · конец дня, мм</figcaption>
+    <figcaption><strong>Как менялся запас влаги</strong><span>Dr — истощение запаса, мм на конец дня. Выше линия → больше истощение → меньше доступной влаги.</span></figcaption>
+    <div className="chart-legend"><span className="root-zone-key-a">A · Без орошения</span><span className="root-zone-key-b">B · С орошением</span><span className="chart-raw-key">RAW · {show(raw)} мм</span></div>
     <div className="root-zone-chart" tabIndex={0} role="region" aria-label="График истощения корневой зоны">
-      <svg viewBox="0 0 720 250" role="img" aria-label="Модельные Dr сценариев A и B и линия RAW">
+      <svg viewBox="0 0 1000 225" role="img" aria-label="Модельные Dr сценариев A и B и линия RAW">
         <title>Истощение влаги: Rainfed и Irrigated</title>
-        <desc>Ноль соответствует полевой влагоёмкости, TAW — исчерпанию доступной воды. Стресс оценивается после поступления воды, до дневной ET; его дни указаны в карточках.</desc>
-        {[0, taw].map((v) => <g key={v}><line x1="54" x2="664" y1={y(v)} y2={y(v)} className="root-zone-grid" /><text x="47" y={y(v) + 4} textAnchor="end">{show(v)}</text></g>)}
-        <line x1="54" x2="664" y1={y(raw)} y2={y(raw)} className="root-zone-raw" />
-        <text x="670" y={y(raw) + 4}>RAW</text>
+        <desc>Dr растёт вверх. Ноль соответствует полевой влагоёмкости, TAW — исчерпанию доступной воды. RAW — порог начала модельного стресса. Стресс оценивается после поступления воды, до дневной ET; график показывает конец дня, поэтому дни стресса следует смотреть в карточках.</desc>
+        <rect x="65" y="25" width="820" height={y(raw) - 25} className="root-zone-threshold-area" />
+        {[0, taw].map((v) => <g key={v}><line x1="65" x2="885" y1={y(v)} y2={y(v)} className="root-zone-grid" /><text x="54" y={y(v) + 4} textAnchor="end">{show(v)}</text></g>)}
+        <line x1="65" x2="885" y1={y(raw)} y2={y(raw)} className="root-zone-raw" />
+        <text x="895" y={y(raw) + 4}>RAW {show(raw)}</text>
         <path d={path(a)} className="root-zone-rainfed" />
         <path d={path(b)} className="root-zone-irrigated" />
         {a.length === 1 && a[0].dr_end_mm !== null && <circle cx={x(0)} cy={y(a[0].dr_end_mm)} r="3" fill="var(--rust)" />}
         {b.length === 1 && b[0].dr_end_mm !== null && <circle cx={x(0)} cy={y(b[0].dr_end_mm)} r="3" fill="var(--forest)" />}
-        <text x="54" y="229">{a[0]?.date}</text><text x="664" y="229" textAnchor="end">{a.at(-1)?.date}</text>
+        <text x="65" y="210">{a[0]?.date}</text><text x="885" y="210" textAnchor="end">{a.at(-1)?.date}</text>
       </svg>
     </div>
-    <p className="field-hint"><span className="root-zone-key-a">A · без полива</span> · <span className="root-zone-key-b">B · заданный полив</span> · пунктир: RAW = {show(raw)} мм. TAW = {show(taw)} мм.</p>
+    <p className="field-hint">Пунктир RAW — порог начала модельного стресса. TAW = {show(taw)} мм — весь доступный запас. График показывает Dr на конец дня, а Ks и дни стресса рассчитываются до дневной ET.</p>
   </figure>;
 }
 
@@ -120,7 +125,7 @@ export default function RootZoneBalance({ water, waterRequest, onResult, draft, 
             <label className="field-label"><span>Начальное истощение Dr</span><input type="number" min="0" step="any" required value={form.depletion} onChange={(event) => update("depletion", event.target.value)} placeholder="Не задано" /></label>
             <label className="field-label"><span>Единица начального состояния</span><select value={form.initialMode} onChange={(event) => update("initialMode", event.target.value)}><option value="mm">мм истощения</option><option value="fraction">Доля TAW, от 0 до 1</option></select></label>
           </div>
-          <label className="field-label"><span>Источник почвы, корней, p и начального состояния</span><input type="text" required value={form.source} onChange={(event) => update("source", event.target.value)} placeholder="Замеры или явно условный пользовательский сценарий" /></label>
+          <SourceField label="Источник почвы, корней, p и начального состояния" value={form.source} onChange={value => update("source", value)} placeholder="Замеры или явно условный пользовательский сценарий" required />
           <p className="field-hint">Полив B — чистая глубина в мм, поступающая в корневую зону, без пересчёта КПД. Пустой график явно означает нулевой полив.</p>
           {events.map((entry, i) => <div className="root-zone-event" key={i}>
             <label className="field-label"><span>Дата полива {i + 1}</span><input type="date" required min={water.historical_period.start} max={water.historical_period.end} value={entry.date} onChange={(event) => changeEvent(i, "date", event.target.value)} /></label>
@@ -132,23 +137,20 @@ export default function RootZoneBalance({ water, waterRequest, onResult, draft, 
           <label className="water-check"><input type="checkbox" checked={form.confirmed} onChange={(event) => update("confirmed", event.target.checked)} /><span>Подтверждаю пользовательские параметры, начальное состояние, график полива и перечисленные допущения сценария.</span></label>
           {!validSoil && <p className="field-hint">Требуется 0 ≤ θWP &lt; θFC ≤ 1, Zr &gt; 0, 0 ≤ p &lt; 1 и начальное Dr от 0 до TAW (либо доля от 0 до 1).</p>}
           {!validEvents && <p className="field-hint">Заполните даты и глубины полива. Даты должны быть уникальными и внутри периода; глубины — неотрицательными.</p>}
-          <button className="rotation-compare-button season-submit" type="submit" disabled={loading || !canRun}>{loading ? <LoaderCircle size={16} className="spin" /> : <Droplets size={16} />}{loading ? "Моделируем…" : "Сравнить сценарии"}</button>
+          <button className={`${result ? "rotation-examples-button" : "rotation-compare-button"} season-submit`} type="submit" disabled={loading || !canRun}>{loading ? <LoaderCircle size={16} className="spin" /> : <Droplets size={16} />}{loading ? "Моделируем…" : result ? "Повторить сравнение сценариев" : "Сравнить сценарии"}</button>
         </fieldset>
       </form>
       </details>
       {loading && <p className="field-hint" role="status">Проверяем исходный ряд и рассчитываем два ежедневных баланса.</p>}
       {error && <div className="error-message" role="alert"><AlertTriangle size={16} /><span>{error}</span></div>}
-      {result && <div className="root-zone-result" aria-live="polite">
-        <p className="calculation-state">Рассчитано с пользовательскими допущениями · фактическая влажность поля неизвестна</p>
-        <div className="root-zone-cards">{(["rainfed", "irrigated"] as const).map((key) => {
-          const scenario = result.scenarios[key], s = scenario.summary;
-          return <article className="metric-cell" key={key}><h4>{key === "rainfed" ? "A · Rainfed" : "B · Irrigated"}</h4><p>Дни с Ks &lt; 1: <strong>{show(s.stress_days)}</strong></p><p>Модельная ETc_adj: <strong>{show(s.etc_adj.total_mm)} мм</strong></p><p>Dr: {show(s.initial_dr_mm)} → {show(s.final_dr_mm)} мм</p><p>Чистый полив: {show(s.net_irrigation_total_mm)} мм</p><p>Глубокое просачивание: {show(s.deep_percolation.total_mm)} мм</p><small className="metric-coverage">Модель: {scenario.coverage.computed_days}/{scenario.coverage.expected_days} дней</small></article>;
-        })}</div>
-        <p className="field-hint">B − A: ETc_adj {show(result.differences.etc_adj_total_mm)} мм; дней стресса {show(result.differences.stress_days)}; конечное Dr {show(result.differences.final_dr_mm)} мм; полив {show(result.differences.net_irrigation_total_mm)} мм; DP {show(result.differences.deep_percolation_total_mm)} мм.</p>
-        <p className="field-hint">NASA: {result.coverage.nasa.observations.available_values}/{result.coverage.nasa.observations.expected_values} наблюдений. ET₀: {result.coverage.et0.days_available}/{result.coverage.et0.days_expected} дней. Потенциальная ETc: {result.coverage.potential_etc.days_available}/{result.coverage.potential_etc.days_expected} дней.</p>
+      {result && <div className="root-zone-result" id="root-zone-results" aria-live="polite">
+        <ScenarioHighlights result={result} />
         <DepletionChart result={result} />
         <details className="provenance-details"><summary>Ежедневные значения и метод <ChevronDown size={15} /></summary><div className="season-detail-body">
           <p className="field-hint">{result.method.policy} · {result.soil.source}</p>
+          <p className="field-hint">B − A: ETc_adj {show(result.differences.etc_adj_total_mm)} мм; дней стресса {show(result.differences.stress_days)}; конечное Dr {show(result.differences.final_dr_mm)} мм; полив {show(result.differences.net_irrigation_total_mm)} мм; DP {show(result.differences.deep_percolation_total_mm)} мм.</p>
+          <p className="field-hint">NASA: {result.coverage.nasa.observations.available_values}/{result.coverage.nasa.observations.expected_values} наблюдений. ET₀: {result.coverage.et0.days_available}/{result.coverage.et0.days_expected} дней. Потенциальная ETc: {result.coverage.potential_etc.days_available}/{result.coverage.potential_etc.days_expected} дней.</p>
+          <p>Начальное истощение Dr: A {show(result.scenarios.rainfed.summary.initial_dr_mm)} мм; B {show(result.scenarios.irrigated.summary.initial_dr_mm)} мм. Модельная эвапотранспирация обозначена ETc_adj, глубокое просачивание — DP. Фактический баланс участка неизвестен.</p>
           {(["rainfed", "irrigated"] as const).map((key) => <div key={key}><h4>{key === "rainfed" ? "A · Rainfed" : "B · Irrigated"}</h4><div className="season-daily" role="region" tabIndex={0} aria-label={`Ежедневный баланс ${key}`}><table><thead><tr>{["Дата", "Dr начало, мм", "Dr конец, мм", "Дождь, мм", "Полив, мм", "DP, мм", "ETc, мм", "Ks", "ETc_adj, мм", "Статус"].map((heading) => <th scope="col" key={heading}>{heading}</th>)}</tr></thead><tbody>{result.scenarios[key].daily.map((day) => <tr key={day.date}><td>{day.date}</td><td>{show(day.dr_start_mm)}</td><td>{show(day.dr_end_mm)}</td><td>{show(day.precipitation_mm)}</td><td>{show(day.net_irrigation_mm)}</td><td>{show(day.deep_percolation_mm)}</td><td>{show(day.potential_etc_mm)}</td><td>{show(day.ks)}</td><td>{show(day.etc_adj_mm)}</td><td>{day.stress_status === "unknown" ? "Неизвестно: см. JSON" : day.stress_status === "modelled_stress" ? "Модельный стресс" : "Без модельного стресса"}</td></tr>)}</tbody></table></div></div>)}
           <ul className="season-limitations">{result.limitations.map((item) => <li key={item}>{item}</li>)}</ul><a href={result.method.reference} target="_blank" rel="noreferrer">FAO-56, глава 8</a><button className="download-button" type="button" onClick={download}><ArrowDownToLine size={14} /> JSON сценариев</button>
         </div></details>

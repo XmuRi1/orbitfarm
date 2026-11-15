@@ -63,3 +63,5 @@ The first screen offers **Попробовать на примере Беэр-Ш
 The interactive map uses the standard OpenStreetMap tile service with visible contributor attribution. It requests tiles for the map viewport only; the app does not prefetch areas or provide offline tile downloads. The initial center is a Beersheba-region test point, not the user's location, and browser geolocation is not requested. Tile availability is best-effort; see the [OpenStreetMap tile usage policy](https://operations.osmfoundation.org/policies/tiles/).
 
 The assessment is exploratory. Crop requirements and demo weights are not scientifically validated, and the result is not a forecast or farming recommendation.
+
+The current visual hierarchy, contextual actions, sticky navigation and result semantics are documented in [DESIGN_V1.md](DESIGN_V1.md). Desktop/mobile visual acceptance remains a separate manual check when computer-use access is unavailable.
