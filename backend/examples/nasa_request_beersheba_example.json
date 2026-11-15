@@ -1,0 +1,10 @@
+{
+  "latitude": 31.25,
+  "longitude": 34.79,
+  "start": "2025-01-01",
+  "end": "2025-03-31",
+  "farm_id": "beer_sheva_region_example_not_a_field",
+  "mode": "demo",
+  "growth_stage": "active_growth",
+  "soil_observations": []
+}

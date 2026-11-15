@@ -1,0 +1,115 @@
+{
+  "schema_version": "1.0.0",
+  "farm_id": "DEMO_SYNTHETIC_FARM",
+  "demo_only": true,
+  "location": {
+    "latitude": 31.25,
+    "longitude": 34.79
+  },
+  "scenario": {
+    "date_start": "2025-01-01",
+    "date_end": "2025-03-31",
+    "growth_stage": "active_growth",
+    "note": "All measurements and stage labels here are synthetic. The same stage does not apply to every crop."
+  },
+  "observations": [
+    {
+      "parameter_id": "CLIM_001",
+      "value": 19,
+      "unit": "°C",
+      "source": {
+        "name": "SYNTHETIC_DEMO",
+        "synthetic": true
+      },
+      "aggregation": "mean_daily_mean_over_period",
+      "context": {
+        "start_date": "2025-01-01",
+        "end_date": "2025-03-31",
+        "growth_stage": "active_growth",
+        "time_standard": "LST"
+      }
+    },
+    {
+      "parameter_id": "CLIM_008",
+      "value": 55,
+      "unit": "%",
+      "source": {
+        "name": "SYNTHETIC_DEMO",
+        "synthetic": true
+      },
+      "aggregation": "mean_daily_mean_over_period",
+      "context": {
+        "start_date": "2025-01-01",
+        "end_date": "2025-03-31",
+        "growth_stage": "active_growth",
+        "time_standard": "LST"
+      }
+    },
+    {
+      "parameter_id": "CLIM_009",
+      "value": 18,
+      "unit": "MJ/m²/day",
+      "source": {
+        "name": "SYNTHETIC_DEMO",
+        "synthetic": true
+      },
+      "aggregation": "mean_daily_total_over_period",
+      "context": {
+        "start_date": "2025-01-01",
+        "end_date": "2025-03-31",
+        "growth_stage": "active_growth",
+        "time_standard": "LST"
+      }
+    },
+    {
+      "parameter_id": "CLIM_007",
+      "value": 260,
+      "unit": "mm per period",
+      "source": {
+        "name": "SYNTHETIC_DEMO",
+        "synthetic": true
+      },
+      "aggregation": "sum_daily_precipitation_over_period",
+      "context": {
+        "start_date": "2025-01-01",
+        "end_date": "2025-03-31",
+        "growth_stage": "active_growth",
+        "time_standard": "LST"
+      }
+    },
+    {
+      "parameter_id": "SOIL_001",
+      "value": 7.1,
+      "unit": "pH",
+      "source": {
+        "name": "SYNTHETIC_DEMO",
+        "synthetic": true
+      },
+      "context": {
+        "soil_depth_cm": [
+          0,
+          30
+        ]
+      }
+    },
+    {
+      "parameter_id": "SOIL_005",
+      "value": "loam",
+      "unit": "USDA / FAO texture class",
+      "source": {
+        "name": "SYNTHETIC_DEMO",
+        "synthetic": true
+      },
+      "context": {
+        "soil_depth_cm": [
+          0,
+          30
+        ]
+      }
+    }
+  ],
+  "water_balance": null,
+  "warnings": [
+    "All observation values are synthetic, including rainfall; DO NOT label them NASA observations."
+  ]
+}

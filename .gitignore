@@ -1,0 +1,48 @@
+# Environment files: commit only explicitly safe examples
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+
+# Python
+__pycache__/
+**/__pycache__/
+*.py[cod]
+.venv/
+**/.venv/
+venv/
+**/venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Runtime cache and generated outputs
+**/cache/
+**/outputs/**
+!**/outputs/.gitkeep
+*.tmp
+*.temp
+
+# Node / Next.js
+node_modules/
+**/node_modules/
+.next/
+**/.next/
+out/
+**/out/
+*.tsbuildinfo
+
+# Vercel local project links
+.vercel/
+**/.vercel/
+
+# Logs, editors, OS
+*.log
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

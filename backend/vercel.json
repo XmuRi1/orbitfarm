@@ -1,0 +1,9 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "app.py": {
+      "maxDuration": 60,
+      "excludeFiles": "{tests/**,examples/**,outputs/**,cache/**,web/**,__pycache__/**,data/power_fixture_synthetic.json,main.py,start_api_windows.bat,README.md}"
+    }
+  }
+}
