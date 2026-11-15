@@ -12,7 +12,7 @@ from datetime import date, datetime, timezone, timedelta
 from pathlib import Path
 from typing import Any, Callable
 
-from nasa_power import fetch_power_daily, convert_power, merge_farm, power_url
+from nasa_power import PARAMETERS, fetch_power_daily, convert_power, merge_farm, power_url, normalize_power_daily
 from scoring import score_all_crops, read_json, validate_farm
 
 ROOT = Path(__file__).resolve().parent
@@ -73,33 +73,35 @@ def validate_request(body: dict) -> dict:
             "farm_id": farm_id, "soil_observations": soil}
 
 
-def _cache_path(params: dict, cache_dir: Path) -> Path:
+def _cache_path(params: dict, cache_dir: Path, parameters: tuple = PARAMETERS) -> Path:
     # Exact point and date range, not approximate grid cells, to avoid confusing source locations.
     fields = {k: params[k] for k in ("latitude", "longitude", "start", "end")}
+    fields.update(cache_schema_version=2, parameters=sorted(parameters), community="AG", time_standard="LST")
     key = hashlib.sha256(json.dumps(fields, sort_keys=True).encode("utf-8")).hexdigest()[:28]
-    return cache_dir / f"power_{key}.json"
+    return cache_dir / f"power_v2_{key}.json"
 
 
 def get_nasa_data(params: dict, *, fetcher: Callable = fetch_power_daily,
-                  cache_dir: Path | None = None) -> tuple[dict, str, bool]:
+                  cache_dir: Path | None = None, parameters: tuple = PARAMETERS) -> tuple[dict, str, bool]:
     """Fetch from official API, or reuse recent earlier genuine response."""
     cache_dir = CACHE_DIR if cache_dir is None else Path(cache_dir)
-    path = _cache_path(params, cache_dir)
-    url = power_url(params["latitude"], params["longitude"], params["start"], params["end"])
+    path = _cache_path(params, cache_dir, parameters)
+    url = power_url(params["latitude"], params["longitude"], params["start"], params["end"], parameters=parameters)
     if path.is_file():
         try:
             saved = json.loads(path.read_text(encoding="utf-8"))
             fetched_on = datetime.fromisoformat(saved["fetched_at"])
             fresh = datetime.now(timezone.utc) - fetched_on <= timedelta(days=CACHE_TTL_DAYS)
-            if fresh and saved.get("request_url") == url and isinstance(saved.get("payload"), dict):
+            if fresh and saved.get("request_url") == url and saved.get("cache_schema_version") == 2 and saved.get("parameters") == list(parameters) and isinstance(saved.get("payload"), dict):
                 payload = saved["payload"]
                 if payload.get("_synthetic_test_fixture"):
                     raise ValueError("synthetic data cannot be reused as live cache")
-                return payload, url, True
+                return payload, saved.get("response_url") or url, True
         except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError):
             pass
     try:
-        payload, response_url = fetcher(params["latitude"], params["longitude"], params["start"], params["end"])
+        extra = {} if parameters == PARAMETERS else {"parameters": parameters}
+        payload, response_url = fetcher(params["latitude"], params["longitude"], params["start"], params["end"], **extra)
     except (json.JSONDecodeError, UnicodeDecodeError) as exc:
         raise NASAUpstreamError("NASA returned invalid JSON") from exc
     if not isinstance(payload, dict) or payload.get("_synthetic_test_fixture"):
@@ -108,7 +110,8 @@ def get_nasa_data(params: dict, *, fetcher: Callable = fetch_power_daily,
     if not isinstance(properties, dict) or not isinstance(properties.get("parameter"), dict):
         raise NASAUpstreamError("NASA response had no usable daily observations")
     cache_doc = {"fetched_at": datetime.now(timezone.utc).isoformat(),
-                 "request_url": url, "payload": payload}
+                 "request_url": url, "response_url": response_url, "payload": payload,
+                 "cache_schema_version": 2, "parameters": list(parameters)}
     # Failure to persist cache must not prevent using fetched real data.
     try:
         cache_dir.mkdir(parents=True, exist_ok=True)
@@ -118,6 +121,37 @@ def get_nasa_data(params: dict, *, fetcher: Callable = fetch_power_daily,
     except OSError:
         pass
     return payload, response_url, False
+
+
+def get_daily_climate(params: dict, *, fetcher: Callable = fetch_power_daily,
+                      cache_dir: Path | None = None, parameters: tuple = PARAMETERS) -> tuple[dict, bool]:
+    """Reuse the raw daily cache and also persist its normalized representation."""
+    payload, url, cached = get_nasa_data(params, fetcher=fetcher, cache_dir=cache_dir, parameters=parameters)
+    try:
+        daily = normalize_power_daily(payload, lat=params["latitude"], lon=params["longitude"],
+                                      start=params["start"], end=params["end"], source_url=url, parameters=parameters)
+    except (ValueError, TypeError, KeyError, AttributeError) as exc:
+        raise NASAUpstreamError("NASA daily response has invalid metadata or time standard") from exc
+    directory = CACHE_DIR if cache_dir is None else Path(cache_dir)
+    # Raw data remains canonical. Normalized persistence is best-effort as well.
+    import tempfile
+    temporary = None
+    try:
+        directory.mkdir(parents=True, exist_ok=True)
+        target = _cache_path(params, directory, parameters).with_suffix('.daily.json')
+        with tempfile.NamedTemporaryFile(mode='w', encoding='utf-8', dir=directory, suffix='.tmp', delete=False) as handle:
+            temporary = Path(handle.name)
+            json.dump(daily, handle, ensure_ascii=False, allow_nan=False)
+        temporary.replace(target)
+    except OSError:
+        pass
+    finally:
+        if temporary is not None:
+            try:
+                temporary.unlink(missing_ok=True)
+            except OSError:
+                pass
+    return daily, cached
 
 
 def assess_nasa(body: dict, *, fetcher: Callable = fetch_power_daily,

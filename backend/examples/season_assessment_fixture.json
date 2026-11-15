@@ -1,0 +1,742 @@
+{
+  "schema_version": "1.0.0",
+  "pipeline": "orbitfarm_seasonal_climate_v1",
+  "mode": "historical_daily_description",
+  "not_a_forecast": true,
+  "crop": {
+    "crop_id": "wheat",
+    "name_ru": "Пшеница",
+    "name_en": "Wheat"
+  },
+  "location": {
+    "latitude": 31.25,
+    "longitude": 34.79
+  },
+  "historical_period": {
+    "start": "2025-01-01",
+    "end": "2025-01-05"
+  },
+  "season": {
+    "sowing_date": "2025-01-01",
+    "end_date": "2025-01-05",
+    "duration_days": 5,
+    "day_count_convention": "inclusive",
+    "growth_stages": "unknown"
+  },
+  "time_standard": "LST",
+  "metrics": {
+    "mean_temperature": {
+      "parameter_id": "CLIM_001",
+      "value": 19.4,
+      "unit": "°C",
+      "aggregation": "mean_daily_mean_over_period",
+      "status": "complete",
+      "days_available": 5,
+      "days_expected": 5,
+      "observed_value": 19.4,
+      "reason": null
+    },
+    "minimum_temperature": {
+      "parameter_id": "CLIM_002",
+      "value": 11.0,
+      "unit": "°C",
+      "aggregation": "minimum_daily_minimum_over_period",
+      "status": "complete",
+      "days_available": 5,
+      "days_expected": 5,
+      "observed_value": 11.0,
+      "reason": null
+    },
+    "maximum_temperature": {
+      "parameter_id": "CLIM_003",
+      "value": 28.0,
+      "unit": "°C",
+      "aggregation": "maximum_daily_maximum_over_period",
+      "status": "complete",
+      "days_available": 5,
+      "days_expected": 5,
+      "observed_value": 28.0,
+      "reason": null
+    },
+    "total_precipitation": {
+      "parameter_id": "CLIM_007",
+      "value": 18.0,
+      "unit": "mm per period",
+      "aggregation": "sum_daily_precipitation_over_period",
+      "status": "complete",
+      "days_available": 5,
+      "days_expected": 5,
+      "observed_value": 18.0,
+      "reason": null
+    },
+    "rainy_days": {
+      "parameter_id": "CLIM_007",
+      "value": 3,
+      "unit": "days",
+      "aggregation": "count_daily_precipitation_gt_0_mm",
+      "status": "complete",
+      "days_available": 5,
+      "days_expected": 5,
+      "observed_value": 3,
+      "reason": null
+    },
+    "mean_solar_radiation": {
+      "parameter_id": "CLIM_009",
+      "value": 17.6,
+      "unit": "MJ/m²/day",
+      "aggregation": "mean_daily_total_over_period",
+      "status": "complete",
+      "days_available": 5,
+      "days_expected": 5,
+      "observed_value": 17.6,
+      "reason": null
+    },
+    "mean_relative_humidity": {
+      "parameter_id": "CLIM_008",
+      "value": 54.6,
+      "unit": "%",
+      "aggregation": "mean_daily_mean_over_period",
+      "status": "complete",
+      "days_available": 5,
+      "days_expected": 5,
+      "observed_value": 54.6,
+      "reason": null
+    }
+  },
+  "coverage": {
+    "expected_days": 5,
+    "complete_days": 5,
+    "available_values": 30,
+    "expected_values": 30,
+    "fraction": 1.0,
+    "by_parameter": {
+      "CLIM_001": {
+        "expected_days": 5,
+        "available_days": 5,
+        "fraction": 1.0,
+        "missing_dates": []
+      },
+      "CLIM_003": {
+        "expected_days": 5,
+        "available_days": 5,
+        "fraction": 1.0,
+        "missing_dates": []
+      },
+      "CLIM_002": {
+        "expected_days": 5,
+        "available_days": 5,
+        "fraction": 1.0,
+        "missing_dates": []
+      },
+      "CLIM_008": {
+        "expected_days": 5,
+        "available_days": 5,
+        "fraction": 1.0,
+        "missing_dates": []
+      },
+      "CLIM_007": {
+        "expected_days": 5,
+        "available_days": 5,
+        "fraction": 1.0,
+        "missing_dates": []
+      },
+      "CLIM_009": {
+        "expected_days": 5,
+        "available_days": 5,
+        "fraction": 1.0,
+        "missing_dates": []
+      }
+    }
+  },
+  "daily": {
+    "schema_version": "1.0.0",
+    "location": {
+      "latitude": 31.25,
+      "longitude": 34.79
+    },
+    "period": {
+      "start": "2025-01-01",
+      "end": "2025-01-05"
+    },
+    "time_standard": "LST",
+    "time_standard_basis": "explicit_request",
+    "source": {
+      "name": "NASA_POWER_DAILY_AG",
+      "url": null,
+      "synthetic": true
+    },
+    "parameters": [
+      {
+        "parameter_id": "CLIM_001",
+        "nasa_parameter": "T2M",
+        "unit": "°C",
+        "source_unit": "C",
+        "unit_status": "compatible",
+        "conversion_factor": 1.0,
+        "aggregation": "daily_mean",
+        "values": [
+          {
+            "date": "2025-01-01",
+            "value": 19.1,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-02",
+            "value": 19.6,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-03",
+            "value": 18.2,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-04",
+            "value": 20.4,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-05",
+            "value": 19.7,
+            "missing_reason": null
+          }
+        ],
+        "ignored_date_keys": [],
+        "coverage": {
+          "expected_days": 5,
+          "available_days": 5,
+          "fraction": 1.0,
+          "missing_dates": []
+        }
+      },
+      {
+        "parameter_id": "CLIM_003",
+        "nasa_parameter": "T2M_MAX",
+        "unit": "°C",
+        "source_unit": "C",
+        "unit_status": "compatible",
+        "conversion_factor": 1.0,
+        "aggregation": "daily_maximum",
+        "values": [
+          {
+            "date": "2025-01-01",
+            "value": 25.0,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-02",
+            "value": 27.0,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-03",
+            "value": 24.0,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-04",
+            "value": 28.0,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-05",
+            "value": 26.0,
+            "missing_reason": null
+          }
+        ],
+        "ignored_date_keys": [],
+        "coverage": {
+          "expected_days": 5,
+          "available_days": 5,
+          "fraction": 1.0,
+          "missing_dates": []
+        }
+      },
+      {
+        "parameter_id": "CLIM_002",
+        "nasa_parameter": "T2M_MIN",
+        "unit": "°C",
+        "source_unit": "C",
+        "unit_status": "compatible",
+        "conversion_factor": 1.0,
+        "aggregation": "daily_minimum",
+        "values": [
+          {
+            "date": "2025-01-01",
+            "value": 12.0,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-02",
+            "value": 13.0,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-03",
+            "value": 11.0,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-04",
+            "value": 14.0,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-05",
+            "value": 12.0,
+            "missing_reason": null
+          }
+        ],
+        "ignored_date_keys": [],
+        "coverage": {
+          "expected_days": 5,
+          "available_days": 5,
+          "fraction": 1.0,
+          "missing_dates": []
+        }
+      },
+      {
+        "parameter_id": "CLIM_008",
+        "nasa_parameter": "RH2M",
+        "unit": "%",
+        "source_unit": "%",
+        "unit_status": "compatible",
+        "conversion_factor": 1.0,
+        "aggregation": "daily_mean",
+        "values": [
+          {
+            "date": "2025-01-01",
+            "value": 55.0,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-02",
+            "value": 53.0,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-03",
+            "value": 57.0,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-04",
+            "value": 50.0,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-05",
+            "value": 58.0,
+            "missing_reason": null
+          }
+        ],
+        "ignored_date_keys": [],
+        "coverage": {
+          "expected_days": 5,
+          "available_days": 5,
+          "fraction": 1.0,
+          "missing_dates": []
+        }
+      },
+      {
+        "parameter_id": "CLIM_007",
+        "nasa_parameter": "PRECTOTCORR",
+        "unit": "mm/day",
+        "source_unit": "mm/day",
+        "unit_status": "compatible",
+        "conversion_factor": 1.0,
+        "aggregation": "daily_total",
+        "values": [
+          {
+            "date": "2025-01-01",
+            "value": 0.0,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-02",
+            "value": 4.0,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-03",
+            "value": 0.0,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-04",
+            "value": 12.0,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-05",
+            "value": 2.0,
+            "missing_reason": null
+          }
+        ],
+        "ignored_date_keys": [],
+        "coverage": {
+          "expected_days": 5,
+          "available_days": 5,
+          "fraction": 1.0,
+          "missing_dates": []
+        }
+      },
+      {
+        "parameter_id": "CLIM_009",
+        "nasa_parameter": "ALLSKY_SFC_SW_DWN",
+        "unit": "MJ/m²/day",
+        "source_unit": "MJ/m^2/day",
+        "unit_status": "compatible",
+        "conversion_factor": 1.0,
+        "aggregation": "daily_total",
+        "values": [
+          {
+            "date": "2025-01-01",
+            "value": 17.0,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-02",
+            "value": 18.0,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-03",
+            "value": 16.0,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-04",
+            "value": 19.0,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-05",
+            "value": 18.0,
+            "missing_reason": null
+          }
+        ],
+        "ignored_date_keys": [],
+        "coverage": {
+          "expected_days": 5,
+          "available_days": 5,
+          "fraction": 1.0,
+          "missing_dates": []
+        }
+      }
+    ]
+  },
+  "source": {
+    "name": "NASA_POWER_DAILY_AG",
+    "url": null,
+    "synthetic": true
+  },
+  "source_is_synthetic": true,
+  "suitability_score_0_100": null,
+  "water_balance": null,
+  "crop_requirements": [
+    {
+      "parameter_id": "CLIM_001",
+      "status": "unknown",
+      "observed_value": 19.4,
+      "reference": {
+        "min": 15.0,
+        "max": 22.0,
+        "unit": "°C"
+      },
+      "comparison": null,
+      "reasons": [
+        "Требование — непроверенный черновик, не подтверждённая критическая граница.",
+        "Даты стадий роста неизвестны; весь сезон нельзя приравнять к отдельной фазе.",
+        "Временной контекст или агрегация требования не совпадают с сезонным наблюдением."
+      ],
+      "requirement": {
+        "kind": "reference_range",
+        "unit": "°C",
+        "data": {
+          "min": 15.0,
+          "max": 22.0,
+          "hard_min": null,
+          "hard_max": null,
+          "semantic": "indicative_reference_not_absolute_optimum"
+        },
+        "context": {
+          "growth_stages": [
+            "active_growth"
+          ],
+          "time_window": null,
+          "soil_depth_cm": null,
+          "location_scope": null,
+          "aggregation": "mean_air_temperature"
+        },
+        "provenance": {
+          "source_file": "AgroWise_10x14_crop_requirements.xlsx",
+          "source_sheet": "first worksheet",
+          "source_cell": "C2",
+          "source_column_ru": "Средняя температура",
+          "original_text": "15–22 °C (активный рост)",
+          "reference_url": null,
+          "source_status": "team_draft_not_independently_verified"
+        },
+        "verification": {
+          "agronomic_verified": false,
+          "approved_for_production_scoring": false
+        },
+        "model_usage": "reference_only_pending_agronomic_validation"
+      }
+    },
+    {
+      "parameter_id": "CLIM_002",
+      "status": "unknown",
+      "observed_value": 11.0,
+      "reference": null,
+      "comparison": null,
+      "reasons": [
+        "Требование — непроверенный черновик, не подтверждённая критическая граница.",
+        "Даты стадий роста неизвестны; весь сезон нельзя приравнять к отдельной фазе.",
+        "Временной контекст или агрегация требования не совпадают с сезонным наблюдением.",
+        "Нет совместимого численного диапазона для сравнения."
+      ],
+      "requirement": {
+        "kind": "cold_stress_advisory",
+        "unit": "°C",
+        "data": {
+          "alert_threshold": null,
+          "qualitative_tags": [
+            "frost_risk_or_cold_sensitivity"
+          ],
+          "absolute_min_c": null
+        },
+        "context": {
+          "growth_stages": [
+            "emergence"
+          ],
+          "time_window": null,
+          "soil_depth_cm": null,
+          "location_scope": null
+        },
+        "provenance": {
+          "source_file": "AgroWise_10x14_crop_requirements.xlsx",
+          "source_sheet": "first worksheet",
+          "source_cell": "D2",
+          "source_column_ru": "Минимальная температура",
+          "original_text": "всходы/растение: зависит от закалки; сильный мороз опасен",
+          "reference_url": null,
+          "source_status": "team_draft_not_independently_verified"
+        },
+        "verification": {
+          "agronomic_verified": false,
+          "approved_for_production_scoring": false
+        },
+        "model_usage": "cannot_score_without_growth_stage_and_cold_event_definition"
+      }
+    },
+    {
+      "parameter_id": "CLIM_003",
+      "status": "unknown",
+      "observed_value": 28.0,
+      "reference": null,
+      "comparison": null,
+      "reasons": [
+        "Требование — непроверенный черновик, не подтверждённая критическая граница.",
+        "Даты стадий роста неизвестны; весь сезон нельзя приравнять к отдельной фазе.",
+        "Временной контекст или агрегация требования не совпадают с сезонным наблюдением.",
+        "Нет совместимого численного диапазона для сравнения."
+      ],
+      "requirement": {
+        "kind": "heat_stress_advisory",
+        "unit": "°C",
+        "data": {
+          "alert_threshold": {
+            "operator": ">",
+            "threshold_from_c": 30.0,
+            "threshold_to_c": 32.0,
+            "warning_only": true
+          },
+          "absolute_max_c": null
+        },
+        "context": {
+          "growth_stages": [
+            "flowering",
+            "filling"
+          ],
+          "time_window": null,
+          "soil_depth_cm": null,
+          "location_scope": null
+        },
+        "provenance": {
+          "source_file": "AgroWise_10x14_crop_requirements.xlsx",
+          "source_sheet": "first worksheet",
+          "source_cell": "E2",
+          "source_column_ru": "Максимальная температура",
+          "original_text": "оптимум обычно ниже 30 °C; жара >30–32 °C стресс, особенно цветение/налив",
+          "reference_url": null,
+          "source_status": "team_draft_not_independently_verified"
+        },
+        "verification": {
+          "agronomic_verified": false,
+          "approved_for_production_scoring": false
+        },
+        "model_usage": "not_an_absolute_tolerance_limit"
+      }
+    },
+    {
+      "parameter_id": "CLIM_007",
+      "status": "unknown",
+      "observed_value": 18.0,
+      "reference": null,
+      "comparison": null,
+      "reasons": [
+        "Требование культуры отсутствует в каталоге."
+      ],
+      "requirement": null
+    },
+    {
+      "parameter_id": "CLIM_009",
+      "status": "unknown",
+      "observed_value": 17.6,
+      "reference": {
+        "min": 15.0,
+        "max": 25.0,
+        "unit": "MJ/m²/day"
+      },
+      "comparison": null,
+      "reasons": [
+        "Требование — непроверенный черновик, не подтверждённая критическая граница.",
+        "Даты стадий роста неизвестны; весь сезон нельзя приравнять к отдельной фазе.",
+        "Временной контекст или агрегация требования не совпадают с сезонным наблюдением."
+      ],
+      "requirement": {
+        "kind": "reference_range",
+        "unit": "MJ/m²/day",
+        "data": {
+          "min": 15.0,
+          "max": 25.0,
+          "hard_min": null,
+          "hard_max": null,
+          "semantic": "indicative_reference_not_absolute_optimum"
+        },
+        "context": {
+          "growth_stages": [
+            "active_growth"
+          ],
+          "time_window": null,
+          "soil_depth_cm": null,
+          "location_scope": null,
+          "aggregation": "mean_daily_radiation_during_growth"
+        },
+        "provenance": {
+          "source_file": "AgroWise_10x14_crop_requirements.xlsx",
+          "source_sheet": "first worksheet",
+          "source_cell": "L2",
+          "source_column_ru": "Солнечная радиация",
+          "original_text": "примерно 15–25 MJ/m²/day в период активного роста",
+          "reference_url": null,
+          "source_status": "team_draft_not_independently_verified"
+        },
+        "verification": {
+          "agronomic_verified": false,
+          "approved_for_production_scoring": false
+        },
+        "model_usage": "reference_only_pending_agronomic_validation"
+      }
+    },
+    {
+      "parameter_id": "CLIM_008",
+      "status": "unknown",
+      "observed_value": 54.6,
+      "reference": {
+        "min": 40.0,
+        "max": 70.0,
+        "unit": "%"
+      },
+      "comparison": null,
+      "reasons": [
+        "Требование — непроверенный черновик, не подтверждённая критическая граница.",
+        "Временной контекст или агрегация требования не совпадают с сезонным наблюдением."
+      ],
+      "requirement": {
+        "kind": "reference_range",
+        "unit": "%",
+        "data": {
+          "min": 40.0,
+          "max": 70.0,
+          "hard_min": null,
+          "hard_max": null,
+          "semantic": "indicative_reference_not_absolute_optimum"
+        },
+        "context": {
+          "growth_stages": null,
+          "time_window": null,
+          "soil_depth_cm": null,
+          "location_scope": null,
+          "aggregation": "relative_humidity_range_period_unspecified"
+        },
+        "provenance": {
+          "source_file": "AgroWise_10x14_crop_requirements.xlsx",
+          "source_sheet": "first worksheet",
+          "source_cell": "B2",
+          "source_column_ru": "Влажность воздуха",
+          "original_text": "40–70% (ориентир; зависит от сезона)",
+          "reference_url": null,
+          "source_status": "team_draft_not_independently_verified"
+        },
+        "verification": {
+          "agronomic_verified": false,
+          "approved_for_production_scoring": false
+        },
+        "model_usage": "reference_only_pending_agronomic_validation"
+      }
+    },
+    {
+      "parameter_id": "WATER_007",
+      "status": "unknown",
+      "observed_value": null,
+      "reference": null,
+      "comparison": null,
+      "reasons": [
+        "Водный баланс не реализован; осадки не равны доступной культуре воде."
+      ],
+      "requirement": {
+        "kind": "reference_range",
+        "unit": "mm/season",
+        "data": {
+          "min": 450.0,
+          "max": 650.0,
+          "hard_min": null,
+          "hard_max": null,
+          "semantic": "seasonal_crop_water_demand_reference"
+        },
+        "context": {
+          "growth_stages": null,
+          "time_window": "whole_crop_cycle",
+          "soil_depth_cm": null,
+          "location_scope": null
+        },
+        "provenance": {
+          "source_file": "AgroWise_10x14_crop_requirements.xlsx",
+          "source_sheet": "first worksheet",
+          "source_cell": "G2",
+          "source_column_ru": "Осадки",
+          "original_text": "450–650 мм за цикл (ориентир водопотребления, не обязательные осадки)",
+          "reference_url": null,
+          "source_status": "team_draft_not_independently_verified"
+        },
+        "verification": {
+          "agronomic_verified": false,
+          "approved_for_production_scoring": false
+        },
+        "model_usage": "water_balance_demand_not_directly_comparable_to_precipitation"
+      }
+    }
+  ],
+  "limitations": [
+    "Исторические данные NASA POWER описывают регион, а не измерения на поле; это не прогноз.",
+    "Даты задаёт пользователь: длительность окна не подтверждает зрелость культуры или стадии роста.",
+    "Средние и экстремумы при пропусках относятся только к доступным дням; интерполяции нет.",
+    "Сумма осадков и число дождливых дней за весь сезон неизвестны при пропущенных осадках.",
+    "Дождливый день определён как PRECTOTCORR > 0 мм; это не порог агрономического стресса.",
+    "Черновые требования не являются критическими границами; пригодность, урожайность и водный баланс не рассчитаны."
+  ],
+  "retrieved_from_cache": false
+}

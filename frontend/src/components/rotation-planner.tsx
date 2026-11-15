@@ -3,17 +3,20 @@
 import { useEffect, useState } from "react";
 import { AlertTriangle, ArrowRight, LoaderCircle, RotateCw, Sprout } from "lucide-react";
 import type {
-  ApiError,
   RotationClimateContext,
   RotationCompareResponse,
   RotationFinding,
   RotationOptionsResponse,
   RotationPlan,
 } from "@/lib/contracts";
+import { analysisErrorText, requestJSON, stableKey } from "@/lib/analysis-session";
+import { useAnalysisSession } from "@/lib/use-analysis-session";
 
 interface RotationPlannerProps {
   climateContext: RotationClimateContext | null;
   contextStale: boolean;
+  analysisScope: string;
+  onResult: (value: RotationCompareResponse | null) => void;
 }
 
 type CropSequence = [string, string, string];
@@ -240,27 +243,21 @@ function PlanEditor({ title, sequence, crops, onChange }: PlanEditorProps) {
   );
 }
 
-export default function RotationPlanner({ climateContext, contextStale }: RotationPlannerProps) {
+export default function RotationPlanner({ climateContext, contextStale, analysisScope, onResult }: RotationPlannerProps) {
   const [options, setOptions] = useState<RotationOptionsResponse | null>(null);
   const [optionsError, setOptionsError] = useState("");
-  const [comparison, setComparison] = useState<RotationCompareResponse | null>(null);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const [planA, setPlanA] = useState<CropSequence>(initialPlanA);
   const [planB, setPlanB] = useState<CropSequence>(initialPlanB);
+  const request = useAnalysisSession<RotationCompareResponse>(stableKey([analysisScope, climateContext, planA, planB]));
+  const comparison = request.result, isLoading = request.loading;
+  const errorMessage = analysisErrorText(request.error);
   const cropNames = Object.fromEntries((options?.available_crops ?? []).map((crop) => [crop.crop_id, crop.name_ru]));
 
   useEffect(() => {
-    const controller = new AbortController();
     let active = true;
-    fetch("/api/rotation/options", { signal: controller.signal })
-      .then(async (response) => {
-        const payload = await response.json() as RotationOptionsResponse | ApiError;
-        if (!response.ok) throw new Error((payload as ApiError).detail ?? "Не удалось загрузить каталог культур.");
-        return payload as RotationOptionsResponse;
-      })
-      .then((payload) => {
-        if (active) setOptions(payload);
+    requestJSON<RotationOptionsResponse>("/api/rotation/options")
+      .then(({ value }) => {
+        if (active) setOptions(value);
       })
       .catch((error: unknown) => {
         if (active && !(error instanceof DOMException && error.name === "AbortError")) {
@@ -269,18 +266,16 @@ export default function RotationPlanner({ climateContext, contextStale }: Rotati
       });
     return () => {
       active = false;
-      controller.abort();
     };
   }, []);
 
   function updateSequence(setSequence: (update: (current: CropSequence) => CropSequence) => void, seasonIndex: number, cropId: string) {
+    request.reset(); onResult(null);
     setSequence((current) => current.map((value, index) => index === seasonIndex ? cropId : value) as CropSequence);
   }
 
   async function compare(includeCustomPlans: boolean) {
-    setErrorMessage("");
-    setIsLoading(true);
-    try {
+    onResult(null);
       const body: { climate_context: RotationClimateContext | null; plans?: Array<{ plan_id: string; crop_ids: string[] }> } = {
         climate_context: climateContext,
       };
@@ -290,29 +285,15 @@ export default function RotationPlanner({ climateContext, contextStale }: Rotati
           { plan_id: "custom_b", crop_ids: planB },
         ];
       }
-      const response = await fetch("/api/rotation/compare", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      const payload = await response.json() as RotationCompareResponse | ApiError;
-      if (!response.ok) {
-        setErrorMessage((payload as ApiError).detail ?? "Не удалось сравнить планы севооборота.");
-        return;
-      }
-      setComparison(payload as RotationCompareResponse);
-    } catch {
-      setErrorMessage("Не удалось связаться с API севооборота. Повторите попытку позже.");
-    } finally {
-      setIsLoading(false);
-    }
+    const value = await request.run(() => requestJSON<RotationCompareResponse>("/api/rotation/compare", body));
+    if (value) onResult(value);
   }
 
   return (
     <section className="rotation-section" id="rotation-planner">
       <div className="rotation-section-header">
         <div>
-          <p className="eyebrow">СТРАТЕГИИ ПОСЛЕДОВАТЕЛЬНОСТИ</p>
+          <p className="eyebrow">03 · СЕВООБОРОТ</p>
           <h2>Планирование севооборота</h2>
           <p>Соберите два плана по три сезона или откройте демонстрационные примеры.</p>
         </div>
@@ -351,8 +332,8 @@ export default function RotationPlanner({ climateContext, contextStale }: Rotati
                   <article className="rotation-example" key={example.plan_id}>
                     <div><strong>{example.name_ru}</strong><small>{sequenceName}</small></div>
                     <div className="rotation-example-actions">
-                      <button type="button" onClick={() => setPlanA([...example.crop_ids] as CropSequence)}>В план A</button>
-                      <button type="button" onClick={() => setPlanB([...example.crop_ids] as CropSequence)}>В план B</button>
+                      <button type="button" onClick={() => { request.reset(); onResult(null); setPlanA([...example.crop_ids] as CropSequence); }}>В план A</button>
+                      <button type="button" onClick={() => { request.reset(); onResult(null); setPlanB([...example.crop_ids] as CropSequence); }}>В план B</button>
                     </div>
                   </article>
                 );

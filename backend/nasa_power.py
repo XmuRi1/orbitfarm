@@ -5,12 +5,14 @@ called at runtime with internet access, never while preparing the demo.
 """
 from __future__ import annotations
 import json
+import math
 from datetime import date
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 ENDPOINT="https://power.larc.nasa.gov/api/temporal/daily/point"
 PARAMETERS = ("T2M", "T2M_MAX", "T2M_MIN", "RH2M", "PRECTOTCORR", "ALLSKY_SFC_SW_DWN")
+WATER_PARAMETERS = PARAMETERS + ("WS2M", "T2MDEW", "PS")
 MAPPING = {
  "T2M": ("CLIM_001", "°C", "mean_daily_mean_over_period", "mean"),
  "T2M_MIN": ("CLIM_002", "°C", "minimum_daily_minimum_over_period", "min"),
@@ -20,20 +22,22 @@ MAPPING = {
  "ALLSKY_SFC_SW_DWN": ("CLIM_009", "MJ/m²/day", "mean_daily_total_over_period", "mean")
 }
 
-def power_url(lat: float, lon:float, start:str, end:str)->str:
+def power_url(lat: float, lon:float, start:str, end:str, *, parameters: tuple = PARAMETERS)->str:
     s=date.fromisoformat(start);e=date.fromisoformat(end)
     if s > e or e >= date.today():
         raise ValueError("Use a historical date range ending before today")
     if not -90 <= lat <= 90 or not -180 <= lon <= 180:
         raise ValueError("Coordinates out of bounds")
+    if not parameters or len(set(parameters)) != len(parameters) or any(key not in WATER_PARAMETERS for key in parameters):
+        raise ValueError("Unsupported or duplicate NASA parameters")
     query=urlencode({"latitude":lat,"longitude":lon,"start":s.strftime('%Y%m%d'),
                      "end":e.strftime('%Y%m%d'),"community":"AG",
-                     "parameters":",".join(PARAMETERS),"format":"JSON", "time-standard":"LST"})
+                     "parameters":",".join(parameters),"format":"JSON", "time-standard":"LST"})
     return ENDPOINT+"?"+query
 
 
-def fetch_power_daily(lat:float,lon:float,start:str,end:str)->tuple[dict,str]:
-    url=power_url(lat,lon,start,end)
+def fetch_power_daily(lat:float,lon:float,start:str,end:str, *, parameters: tuple = PARAMETERS)->tuple[dict,str]:
+    url=power_url(lat,lon,start,end,parameters=parameters)
     req=Request(url,headers={"User-Agent":"OrbitFarm-MVP/1.0 (educational NASA Space Apps prototype)"})
     with urlopen(req,timeout=35) as response:
         data=json.load(response)
@@ -103,6 +107,106 @@ def _date_range(start:date,end:date):
     while start <= end:
         yield start
         start+=timedelta(days=1)
+
+
+DAILY_UNITS = {
+    "T2M": ("°C", {"C", "°C"}, "daily_mean"),
+    "T2M_MIN": ("°C", {"C", "°C"}, "daily_minimum"),
+    "T2M_MAX": ("°C", {"C", "°C"}, "daily_maximum"),
+    "RH2M": ("%", {"%"}, "daily_mean"),
+    "PRECTOTCORR": ("mm/day", {"mm/day", "mm d-1"}, "daily_total"),
+    "ALLSKY_SFC_SW_DWN": (
+        "MJ/m²/day", {"MJ/m^2/day", "MJ/m²/day", "MJ m-2 day-1", "kW-hr/m^2/day", "kWh/m²/day"}, "daily_total",
+    ),
+    "WS2M": ("m/s", {"m/s", "m s-1"}, "daily_mean"),
+    "T2MDEW": ("°C", {"C", "°C"}, "daily_mean"),
+    "PS": ("kPa", {"kPa", "Pa", "hPa", "mb"}, "daily_mean"),
+}
+
+
+def _finite_daily_number(value) -> bool:
+    try:
+        return type(value) in (int, float) and math.isfinite(value)
+    except OverflowError:
+        return False
+
+
+def normalize_power_daily(payload: dict, *, lat: float, lon: float, start: str,
+                          end: str, source_url: str | None = None, parameters: tuple = PARAMETERS) -> dict:
+    """Keep every requested LST day, explicitly marking missing/invalid values.
+
+    This separate representation does not change the legacy aggregate contract.
+    Precipitation's DAILY unit is mm/day; its seasonal aggregate is mm per period.
+    """
+    first, last = date.fromisoformat(start), date.fromisoformat(end)
+    if first > last:
+        raise ValueError("Daily series start must not follow end")
+    properties = payload.get("properties")
+    values = properties.get("parameter") if isinstance(properties, dict) else None
+    if not isinstance(values, dict):
+        raise ValueError("NASA response must contain properties.parameter")
+    header = payload.get("header") or {}
+    if not isinstance(header, dict):
+        raise ValueError("Invalid NASA header")
+    declared_time = header.get("time_standard")
+    if declared_time is not None and declared_time != "LST":
+        raise ValueError("NASA time standard differs from requested LST")
+    metadata = payload.get("parameters") or {}
+    if not isinstance(metadata, dict):
+        raise ValueError("Invalid NASA parameter metadata")
+    days = list(_date_range(first, last))
+    expected_keys = {day.strftime('%Y%m%d') for day in days}
+    series = []
+    if not parameters or len(set(parameters)) != len(parameters) or any(key not in DAILY_UNITS for key in parameters):
+        raise ValueError("Unsupported or duplicate daily parameters")
+    for key in parameters:
+        unit, accepted_units, aggregation = DAILY_UNITS[key]
+        meta = metadata.get(key)
+        source_unit = meta.get("units") if isinstance(meta, dict) else None
+        compatible_units = isinstance(source_unit, str) and source_unit in accepted_units
+        raw = values.get(key)
+        raw = raw if isinstance(raw, dict) else {}
+        factor = 3.6 if key == "ALLSKY_SFC_SW_DWN" and source_unit in ("kW-hr/m^2/day", "kWh/m²/day") else 1.0
+        if key == "PS":
+            factor = {"Pa": 0.001, "hPa": 0.1, "mb": 0.1}.get(source_unit, 1.0) if isinstance(source_unit, str) else 1.0
+        rows = []
+        for day in days:
+            date_key = day.strftime('%Y%m%d')
+            value = raw.get(date_key)
+            reason = None
+            if not compatible_units:
+                reason = "unsupported_or_missing_unit"
+            elif date_key not in raw:
+                reason = "missing_day"
+            elif not _finite_daily_number(value):
+                reason = "invalid_value"
+            elif value == header.get("fill_value", -999) or value <= -990:
+                reason = "fill_value"
+            elif (key in ("PRECTOTCORR", "ALLSKY_SFC_SW_DWN", "WS2M") and value < 0) or (key == "PS" and value <= 0) or (key == "RH2M" and not 0 <= value <= 100):
+                reason = "outside_physical_range"
+            normalized = float(value) * factor if reason is None else None
+            if reason is None and not _finite_daily_number(normalized):
+                normalized, reason = None, 'invalid_value_after_unit_conversion'
+            rows.append({"date": day.isoformat(), "value": normalized,
+                         "missing_reason": reason})
+        missing = [row["date"] for row in rows if row["value"] is None]
+        series.append({
+            "parameter_id": MAPPING[key][0] if key in MAPPING else "CLIM_011" if key == "WS2M" else None,
+            "nasa_parameter": key, "unit": unit,
+            "source_unit": source_unit if isinstance(source_unit, str) else None, "unit_status": "compatible" if compatible_units else "unsupported",
+            "conversion_factor": factor, "aggregation": aggregation,
+            "values": rows, "ignored_date_keys": sorted(set(raw) - expected_keys),
+            "coverage": {"expected_days": len(days), "available_days": len(days) - len(missing),
+                         "fraction": round((len(days) - len(missing)) / len(days), 6), "missing_dates": missing},
+        })
+    return {
+        "schema_version": "1.0.0", "location": {"latitude": lat, "longitude": lon},
+        "period": {"start": start, "end": end}, "time_standard": "LST",
+        "time_standard_basis": "response_header" if declared_time else "explicit_request",
+        "source": {"name": "NASA_POWER_DAILY_AG", "url": source_url,
+                   "synthetic": bool(payload.get("_synthetic_test_fixture", False))},
+        "parameters": series,
+    }
 
 
 def merge_farm(base:dict, additional:dict) -> dict:

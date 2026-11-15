@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import dynamic from "next/dynamic";
 import {
   AlertTriangle,
@@ -21,14 +21,26 @@ import {
   Wind,
 } from "lucide-react";
 import type {
-  ApiError,
   AssessRequest,
   CropAssessment,
   NasaAssessResponse,
   Observation,
   SoilObservation,
+  RotationOptionsResponse,
+  RotationCompareResponse,
 } from "@/lib/contracts";
 import RotationPlanner from "@/components/rotation-planner";
+import SeasonalAnalysis from "@/components/seasonal-analysis";
+import AnalysisSummary from "@/components/analysis-summary";
+import type { SeasonAssessment } from "@/lib/season-contracts";
+import type { WaterAssessment } from "@/lib/water-contracts";
+import type { RootZoneComparison } from "@/lib/root-zone-contracts";
+import { analysisErrorText, contextKey, currentPublication, requestJSON, stableKey } from "@/lib/analysis-session";
+import { useAnalysisSession } from "@/lib/use-analysis-session";
+import { seasonClimateContext } from "@/lib/experience-summary";
+import FirstRunExperience from "@/components/first-run-experience";
+import { emptyScenarioDrafts, reconcileDrafts, makeWaterBody, makeRootBody, type ScenarioBindings } from "@/lib/scenario-inputs";
+import { DEMO_CONTEXT, confirmedDemoDrafts, runGuidedDemo } from "@/lib/guided-demo";
 
 const FieldMap = dynamic(() => import("@/components/field-map"), {
   ssr: false,
@@ -36,6 +48,7 @@ const FieldMap = dynamic(() => import("@/components/field-map"), {
 });
 
 interface FormState {
+  cropId: string;
   latitude: string;
   longitude: string;
   start: string;
@@ -47,6 +60,7 @@ interface FormState {
 }
 
 const initialForm: FormState = {
+  cropId: "",
   latitude: "31.25",
   longitude: "34.79",
   start: "2025-01-01",
@@ -114,7 +128,7 @@ const messageTranslations: Record<string, string> = {
   "Crop requirements are unverified team draft.":
     "Требования к этой культуре пока остаются непроверенным командным черновиком.",
   "Seasonal water balance is not implemented; cannot give an overall suitability score.":
-    "Сезонный водный баланс ещё не реализован, поэтому итоговая пригодность не рассчитывается.",
+    "Этот ответ не определяет фактический водный баланс участка. Почвенные сценарии рассчитываются отдельно; научная пригодность остаётся неизвестной.",
   "The same scenario period is not necessarily a valid crop growing season for every crop.":
     "Один и тот же период не обязательно соответствует сезону выращивания каждой культуры.",
   "Unverified source range and illustrative linear penalty, not agronomic yield prediction.":
@@ -174,19 +188,6 @@ function formatReference(factor: CropAssessment["factors"][number]) {
 
 function findObservation(observations: Observation[], id: string) {
   return observations.find((observation) => observation.parameter_id === id);
-}
-
-function displayError(apiError: ApiError) {
-  if (apiError.error === "nasa_upstream_unavailable") {
-    return "NASA POWER не вернул пригодные данные. Проверьте подключение и повторите запрос.";
-  }
-  if (apiError.error === "backend_unavailable") {
-    return "Не удалось подключиться к Python API. Проверьте, что backend запущен и ORBITFARM_BACKEND_URL задан.";
-  }
-  if (apiError.error === "backend_not_configured") {
-    return "Адрес Python API не задан. Настройте ORBITFARM_BACKEND_URL на сервере Next.js.";
-  }
-  return apiError.detail ?? "Не удалось выполнить анализ. Проверьте введённые данные.";
 }
 
 function factorValue(factor: CropAssessment["factors"][number]) {
@@ -297,11 +298,40 @@ export default function Home() {
   const [form, setForm] = useState<FormState>(initialForm);
   const [mapPoint, setMapPoint] = useState<[number, number]>([31.25, 34.79]);
   const coordinatesRef = useRef({ latitude: initialForm.latitude, longitude: initialForm.longitude });
-  const [result, setResult] = useState<NasaAssessResponse | null>(null);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const scope = contextKey(form);
+  const legacyRequest = useAnalysisSession<NasaAssessResponse>(stableKey(form));
+  const seasonRequest = useAnalysisSession<SeasonAssessment>(scope);
+  const demoRequest = useAnalysisSession<boolean>("guided-demo");
+  const demoGeneration = useRef(0);
+  const [demoOpen, setDemoOpen] = useState(false);
+  const [demoAccepted, setDemoAccepted] = useState(false);
+  const [demoProgress, setDemoProgress] = useState("");
+  const [demoSeason, setDemoSeason] = useState<{ scope: string; value: SeasonAssessment } | null>(null);
+  const [drafts, setDrafts] = useState(emptyScenarioDrafts);
+  const seasonResult = seasonRequest.result ?? currentPublication(demoSeason, scope);
+  const result = legacyRequest.result, isLoading = legacyRequest.loading;
+  const errorMessage = analysisErrorText(legacyRequest.error);
+  const [options, setOptions] = useState<RotationOptionsResponse | null>(null);
+  const [catalogueError, setCatalogueError] = useState("");
+  const [waterReport, setWaterReport] = useState<{ scope: string; assumptions: string; value: WaterAssessment } | null>(null);
+  const [rootReport, setRootReport] = useState<{ scope: string; assumptions: string; rootAssumptions: string; value: RootZoneComparison } | null>(null);
+  const [rotationReport, setRotationReport] = useState<{ token: string; value: RotationCompareResponse } | null>(null);
+  useEffect(() => {
+    let active = true;
+    requestJSON<RotationOptionsResponse>("/api/rotation/options")
+      .then(({ value }) => { if (active) setOptions(value); })
+      .catch(() => { if (active) setCatalogueError("Не удалось загрузить каталог культур. Проверьте API и обновите страницу."); });
+    return () => { active = false; };
+  }, []);
+  function clearDependentResults() { setWaterReport(null); setRootReport(null); setRotationReport(null); }
+  function cancelDemo() { demoGeneration.current++; demoRequest.reset(); setDemoAccepted(false); setDemoProgress(""); }
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
+    legacyRequest.reset();
+    if (["latitude", "longitude", "start", "end", "cropId"].includes(key)) {
+      cancelDemo(); setDemoSeason(null); seasonRequest.reset(); clearDependentResults();
+      setDrafts((current) => reconcileDrafts(form, { ...form, [key]: value }, current));
+    }
     setForm((current) => ({ ...current, [key]: value }));
   }
 
@@ -313,11 +343,13 @@ export default function Home() {
   }
 
   function selectMapPoint(latitude: number, longitude: number) {
+    cancelDemo(); setDemoSeason(null); legacyRequest.reset(); seasonRequest.reset(); clearDependentResults();
     const point: [number, number] = [
       Number(latitude.toFixed(5)),
       Number(longitude.toFixed(5)),
     ];
     coordinatesRef.current = { latitude: String(point[0]), longitude: String(point[1]) };
+    setDrafts((current) => reconcileDrafts(form, { ...form, ...coordinatesRef.current }, current));
     setMapPoint(point);
     setForm((current) => ({
       ...current,
@@ -327,22 +359,33 @@ export default function Home() {
   }
 
   function useBeershebaExample() {
-    coordinatesRef.current = { latitude: "31.25", longitude: "34.79" };
-    setMapPoint([31.25, 34.79]);
-    setForm((current) => ({
-      ...current,
-      latitude: "31.25",
-      longitude: "34.79",
-      start: "2025-01-01",
-      end: "2025-03-31",
-    }));
+    setDemoOpen(true);
+    document.getElementById("first-run")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setErrorMessage("");
-    setResult(null);
-    setIsLoading(true);
+  async function startDemo() {
+    if (!demoAccepted) return;
+    const preset = confirmedDemoDrafts(demoAccepted);
+    const waterBody = makeWaterBody(DEMO_CONTEXT, preset.water), rootBody = makeRootBody(waterBody, preset.root);
+    const demoScope = contextKey(DEMO_CONTEXT), waterKey = stableKey(waterBody), rootKey = stableKey(rootBody);
+    const generation = ++demoGeneration.current;
+    legacyRequest.reset(); seasonRequest.reset(); clearDependentResults(); setDemoSeason(null);
+    coordinatesRef.current = { latitude: DEMO_CONTEXT.latitude, longitude: DEMO_CONTEXT.longitude };
+    setMapPoint([Number(DEMO_CONTEXT.latitude), Number(DEMO_CONTEXT.longitude)]);
+    setForm({ ...form, ...DEMO_CONTEXT, pH: "", texture: "", activeGrowth: false });
+    setDrafts(preset); setDemoProgress("Получаем историческую погоду");
+    await demoRequest.run(async () => {
+      const value = await runGuidedDemo(demoAccepted, { water: waterBody, root: rootBody }, requestJSON,
+        () => demoGeneration.current === generation, (stage, result) => {
+          if (stage === "season") { setDemoSeason({ scope: demoScope, value: result as SeasonAssessment }); setDemoProgress("Рассчитываем ET₀ и ETc"); }
+          if (stage === "water") { setWaterReport({ scope: demoScope, assumptions: waterKey, value: result as WaterAssessment }); setDemoProgress("Сравниваем почвенные сценарии"); }
+          if (stage === "root") { setRootReport({ scope: demoScope, assumptions: waterKey, rootAssumptions: rootKey, value: result as RootZoneComparison }); setDemoProgress("Пример рассчитан"); }
+        });
+      return { value, reused: false };
+    });
+  }
+
+  async function assessFactors() {
 
     const soilObservations: SoilObservation[] = [];
     if (form.pH.trim()) {
@@ -375,23 +418,15 @@ export default function Home() {
       soil_observations: soilObservations,
     };
 
-    try {
-      const response = await fetch("/api/assess", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      const payload = await response.json() as NasaAssessResponse | ApiError;
-      if (!response.ok) {
-        setErrorMessage(displayError(payload as ApiError));
-        return;
-      }
-      setResult(payload as NasaAssessResponse);
-    } catch {
-      setErrorMessage("Не удалось обработать ответ. Проверьте локальный API и повторите запрос.");
-    } finally {
-      setIsLoading(false);
-    }
+    await legacyRequest.run(() => requestJSON<NasaAssessResponse>("/api/assess", body));
+  }
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault(); cancelDemo(); setDemoSeason(null); clearDependentResults();
+    await seasonRequest.run(() => requestJSON<SeasonAssessment>("/api/season/assess", {
+      crop_id: form.cropId, latitude: Number(form.latitude), longitude: Number(form.longitude),
+      sowing_date: form.start, end_date: form.end,
+    }));
   }
 
   function downloadResult() {
@@ -412,31 +447,24 @@ export default function Home() {
   const displayCrops = result
     ? [...result.assessment.crops].sort((first, second) => first.name_ru.localeCompare(second.name_ru, "ru"))
     : [];
-  const rotationClimateContext = result
-    ? {
-        historical_period: result.historical_period,
-        location: result.farm.location,
-        source_is_synthetic: result.source_is_synthetic,
-        retrieved_from_cache: result.retrieved_from_cache,
-        observations: result.farm.observations,
-      }
-    : null;
+  const rotationClimateContext = useMemo(() => seasonResult ? seasonClimateContext(seasonResult)
+    : result ? { historical_period: result.historical_period, location: result.farm.location,
+      source_is_synthetic: result.source_is_synthetic, retrieved_from_cache: result.retrieved_from_cache,
+      observations: result.farm.observations } : null, [seasonResult, result]);
+  const rotationToken = stableKey([scope, rotationClimateContext]);
+  const water = currentPublication(waterReport, scope);
+  const root = water ? currentPublication(rootReport, scope, waterReport?.assumptions) : null;
+  const bindings: ScenarioBindings = { drafts,
+    onWaterDraft: (value) => { cancelDemo(); setDrafts((current) => ({ ...current, water: value })); setWaterReport(null); setRootReport(null); },
+    onRootDraft: (value) => { cancelDemo(); setDrafts((current) => ({ ...current, root: value })); setRootReport(null); },
+    waterSeed: water && waterReport ? { key: waterReport.assumptions, value: water } : null,
+    rootSeed: root && rootReport ? { key: rootReport.rootAssumptions, value: root } : null };
+  const rotation = rotationReport?.token === rotationToken ? rotationReport.value : null;
   const currentPoint = parseCoordinates(form.latitude, form.longitude);
-  const coordinatesChanged = Boolean(
-    result &&
-    (!currentPoint ||
-      currentPoint[0] !== result.farm.location.latitude ||
-      currentPoint[1] !== result.farm.location.longitude),
-  );
-  const rotationContextStale = Boolean(
-    result &&
-    (coordinatesChanged ||
-      form.start !== result.historical_period.start ||
-      form.end !== result.historical_period.end),
-  );
+  const coordinatesChanged = Boolean(result && (!currentPoint || currentPoint[0] !== result.farm.location.latitude || currentPoint[1] !== result.farm.location.longitude));
 
   return (
-    <main className="app-shell">
+    <main className="app-shell ux-polish">
       <header className="topbar">
         <a className="brand" href="#top" aria-label="OrbitFarm, главная">
           <span className="brand-mark"><Leaf size={19} strokeWidth={2.2} /></span>
@@ -452,21 +480,29 @@ export default function Home() {
 
       <section className="page-heading" id="top">
         <div>
-          <p className="eyebrow">Климатический профиль участка</p>
-          <h1>Проверьте климат.<br /><em>Изучите потенциал.</em></h1>
+          <p className="eyebrow">Участок · климат и вода · севооборот</p>
+          <h1>Изучите участок.<br /><em>Сравните сценарии.</em></h1>
         </div>
         <p className="heading-note">
-          Исторические наблюдения NASA POWER и прозрачное сопоставление факторов
-          для десяти культур. Не прогноз урожая.
+          Один участок и историческое окно для анализа климата и воды.
+          Два плана севооборота — без прогноза урожайности и научного рейтинга.
         </p>
       </section>
 
+      <FirstRunExperience open={demoOpen} onOpen={setDemoOpen} accepted={demoAccepted} onAccepted={setDemoAccepted}
+        onStart={() => { void startDemo(); }} loading={demoRequest.loading} progress={demoProgress} error={analysisErrorText(demoRequest.error)} />
+
+      <nav className="journey-nav" aria-label="Этапы анализа">
+        <a href="#site">01 · Участок</a><a href="#climate-water">02 · Климат и вода</a>
+        <a href="#rotation-planner">03 · Севооборот</a><a href="#analysis-summary">04 · Итоги</a>
+      </nav>
+
       <div className="dashboard-grid">
-        <aside className="control-rail">
+        <aside className="control-rail" id="site">
           <div className="rail-heading">
             <div>
-              <p className="eyebrow">Новый анализ</p>
-              <h2>Параметры участка</h2>
+              <p className="eyebrow">01 · УЧАСТОК</p>
+              <h2>Участок и период</h2>
             </div>
             <button className="icon-button" type="button" onClick={useBeershebaExample} title="Подставить пример Беэр-Шевы" aria-label="Подставить пример Беэр-Шевы">
               <RotateCcw size={16} />
@@ -501,6 +537,7 @@ export default function Home() {
 
             <div className="form-section">
               <div className="section-label"><CalendarDays size={15} /><span>Исторический период</span></div>
+              <label className="field-label select-label"><span>Культура исторического сценария</span><select required value={form.cropId} onChange={(event) => update("cropId", event.target.value)}><option value="">Выберите культуру</option>{options?.available_crops.map((crop) => <option key={crop.crop_id} value={crop.crop_id}>{crop.name_ru}</option>)}</select></label>
               <div className="coordinate-grid date-grid">
                 <label className="field-label">
                   <span>С</span>
@@ -511,9 +548,13 @@ export default function Home() {
                   <input aria-label="Дата окончания" type="date" required value={form.end} onChange={(event) => update("end", event.target.value)} />
                 </label>
               </div>
-              <p className="field-hint">NASA POWER предоставляет прошедшие наблюдения, не прогноз.</p>
+              <p className="field-hint">Даты задаёте вы; соответствие сезону выращивания не подтверждено. NASA POWER показывает историю, не прогноз.</p>
+              <p className="field-hint">Участок, даты и культура общие для климата и воды. Совместимые черновики сохраняются; культуры трёх сезонов задаются отдельно.</p>
+              {catalogueError && <p className="error-message" role="alert">{catalogueError}</p>}
             </div>
 
+            <details className="provenance-details site-expert">
+              <summary>Свойства почвы и экспертное сопоставление</summary>
             <div className="form-section">
               <div className="section-label"><Wind size={15} /><span>Сценарий оценки</span></div>
               <label className="field-label select-label">
@@ -551,12 +592,16 @@ export default function Home() {
                 </label>
               </div>
               <p className="field-hint">Передаются только введённые вами значения; NASA не измеряет pH или текстуру.</p>
+              <p className="field-hint">pH и текстура не определяют θFC/θWP. Параметры корневой зоны задаются отдельно в водном сценарии.</p>
             </div>
+              <button className="download-button" type="button" disabled={isLoading || !currentPoint} onClick={() => { void assessFactors(); }}>{isLoading ? "Сопоставляем…" : "Сопоставить факторы культур"}</button>
+              <p className="field-hint">Ответ доступен в раскрываемых деталях раздела 02. Демонстрационные баллы не являются научной рекомендацией.</p>
+            </details>
 
-            <button className="submit-button" type="submit" disabled={isLoading}>
-              {isLoading ? <LoaderCircle className="spin" size={17} /> : <CloudSun size={17} />}
-              {isLoading ? "Запрашиваем NASA POWER…" : "Запустить анализ"}
-              {!isLoading && <ArrowRight size={16} />}
+            <button className="submit-button" type="submit" disabled={seasonRequest.loading || demoRequest.loading || !options || !currentPoint}>
+              {seasonRequest.loading ? <LoaderCircle className="spin" size={17} /> : <CloudSun size={17} />}
+              {seasonRequest.loading ? "Получаем сезон…" : "Проанализировать сезон"}
+              {!seasonRequest.loading && <ArrowRight size={16} />}
             </button>
           </form>
 
@@ -568,7 +613,19 @@ export default function Home() {
           )}
         </aside>
 
-        <section className="results-area" aria-live="polite">
+        <section className="results-area integrated-climate" id="climate-water" aria-live="polite">
+          <div className="result-header"><div><p className="eyebrow">02 · КЛИМАТ И ВОДА</p><h2>Исторический сезон</h2></div></div>
+          {!seasonResult && <p className="field-hint">{form.latitude || "—"}, {form.longitude || "—"} · {form.start || "—"} — {form.end || "—"} · {options?.available_crops.find((crop) => crop.crop_id === form.cropId)?.name_ru || "культура не выбрана"}.</p>}
+          {drafts.notice && <p className="scenario-context-note" role="status">{drafts.notice}</p>}
+          <SeasonalAnalysis key={scope} result={seasonResult} loading={seasonRequest.loading}
+            error={seasonRequest.error ? { status: seasonRequest.error.status, message: analysisErrorText(seasonRequest.error).replace(/^HTTP \d+: /, "") } : null}
+            reused={seasonRequest.reused}
+            bindings={bindings}
+            onWaterResult={(value, assumptions = "") => { setWaterReport(value ? { scope, assumptions, value } : null); setRootReport(null); }}
+            onRootResult={(value, assumptions = "", rootAssumptions = "") => setRootReport(value ? { scope, assumptions, rootAssumptions, value } : null)} />
+          <details className="provenance-details legacy-analysis"><summary>Экспертное сопоставление культур и агрегаты NASA</summary>
+          <p className="field-hint">Запускается отдельно в экспертных настройках участка. Старые API и JSON-экспорт сохранены.</p>
+          {legacyRequest.reused && <p className="field-hint">Повторно использован ответ для тех же параметров экспертного запроса.</p>}
           {!result && !isLoading && !errorMessage && (
             <div className="welcome-state">
               <div className="welcome-art" aria-hidden="true">
@@ -679,14 +736,19 @@ export default function Home() {
               </details>
             </div>
           )}
+          </details>
         </section>
       </div>
 
       <RotationPlanner
-        key={result ? `${result.farm.location.latitude}-${result.farm.location.longitude}-${result.historical_period.start}-${result.historical_period.end}` : "no-climate-context"}
         climateContext={rotationClimateContext}
-        contextStale={rotationContextStale}
+        contextStale={false}
+        analysisScope={scope}
+        onResult={(value) => setRotationReport(value ? { token: rotationToken, value } : null)}
       />
+
+      <AnalysisSummary context={form} cropName={options?.available_crops.find((crop) => crop.crop_id === form.cropId)?.name_ru ?? ""}
+        season={seasonResult} water={water} root={root} rotation={rotation} />
 
       <footer className="page-footer">
         <span><Leaf size={14} /> OrbitFarm Field Lab</span>

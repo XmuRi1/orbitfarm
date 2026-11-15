@@ -1,0 +1,1022 @@
+{
+  "schema_version": "1.0.0",
+  "pipeline": "orbitfarm_water_demand_v1",
+  "mode": "historical_reference_et0_and_potential_etc",
+  "not_a_forecast": true,
+  "crop_id": "wheat",
+  "location": {
+    "latitude": 31.25,
+    "longitude": 34.79
+  },
+  "historical_period": {
+    "start": "2025-01-01",
+    "end": "2025-01-05"
+  },
+  "duration_days": 5,
+  "time_standard": "LST",
+  "daily": [
+    {
+      "date": "2025-01-01",
+      "et0_mm": 3.4772309141959874,
+      "et0_status": "computed",
+      "et0_reason_codes": [],
+      "quality_flags": [
+        "cloud_ratio_bounded_asce2005",
+        "rs_rso_capped_at_1_per_equation_39"
+      ],
+      "cloud_correction": {
+        "policy": "fao56_pm_asce2005_cloud_bounds",
+        "rs_rso_raw": 1.1757843210193246,
+        "rs_rso_used": 1.0,
+        "bounded": true,
+        "reason": "rs_rso_above_1_0",
+        "cloud_factor_raw": 1.2373088333760882,
+        "cloud_factor_used": 1.0
+      },
+      "inputs": {
+        "T2M_MIN": 12.0,
+        "T2M_MAX": 25.0,
+        "ALLSKY_SFC_SW_DWN": 17.0,
+        "WS2M": 2.0,
+        "T2MDEW": 7.0,
+        "PS": 100.0
+      },
+      "intermediates": {
+        "day_of_year": 1,
+        "ra_mj_m2_day": 19.226640953270422,
+        "daylight_hours": 10.012180632463409,
+        "rso_mj_m2_day": 14.458433996859357,
+        "rs_rso_raw": 1.1757843210193246,
+        "rs_rso_used": 1.0,
+        "cloud_correction": {
+          "policy": "fao56_pm_asce2005_cloud_bounds",
+          "rs_rso_raw": 1.1757843210193246,
+          "rs_rso_used": 1.0,
+          "bounded": true,
+          "reason": "rs_rso_above_1_0",
+          "cloud_factor_raw": 1.2373088333760882,
+          "cloud_factor_used": 1.0
+        },
+        "rns_mj_m2_day": 13.09,
+        "rnl_mj_m2_day": 7.112287946542888,
+        "rn_mj_m2_day": 5.977712053457112,
+        "tmean_c": 18.5,
+        "es_kpa": 2.285170795276902,
+        "ea_kpa": 1.001858425976152,
+        "vpd_kpa": 1.28331236930075,
+        "delta_kpa_per_c": 0.13338440882778785,
+        "gamma_kpa_per_c": 0.0665,
+        "u2_used_m_s": 2.0,
+        "g_mj_m2_day": 0.0
+      },
+      "precipitation_mm": 0.0,
+      "stage": "initial",
+      "kc": 0.3,
+      "etc_mm": 1.0431692742587961,
+      "etc_reason_codes": [],
+      "etc_quality_flags": [
+        "cloud_ratio_bounded_asce2005",
+        "rs_rso_capped_at_1_per_equation_39"
+      ]
+    },
+    {
+      "date": "2025-01-02",
+      "et0_mm": 3.955836235048025,
+      "et0_status": "computed",
+      "et0_reason_codes": [],
+      "quality_flags": [
+        "cloud_ratio_bounded_asce2005",
+        "rs_rso_capped_at_1_per_equation_39"
+      ],
+      "cloud_correction": {
+        "policy": "fao56_pm_asce2005_cloud_bounds",
+        "rs_rso_raw": 1.2415314592803557,
+        "rs_rso_used": 1.0,
+        "bounded": true,
+        "reason": "rs_rso_above_1_0",
+        "cloud_factor_raw": 1.3260674700284802,
+        "cloud_factor_used": 1.0
+      },
+      "inputs": {
+        "T2M_MIN": 13.0,
+        "T2M_MAX": 27.0,
+        "ALLSKY_SFC_SW_DWN": 18.0,
+        "WS2M": 2.0,
+        "T2MDEW": 7.0,
+        "PS": 100.0
+      },
+      "intermediates": {
+        "day_of_year": 2,
+        "ra_mj_m2_day": 19.279551906514218,
+        "daylight_hours": 10.020348964402714,
+        "rso_mj_m2_day": 14.498223033698691,
+        "rs_rso_raw": 1.2415314592803557,
+        "rs_rso_used": 1.0,
+        "cloud_correction": {
+          "policy": "fao56_pm_asce2005_cloud_bounds",
+          "rs_rso_raw": 1.2415314592803557,
+          "rs_rso_used": 1.0,
+          "bounded": true,
+          "reason": "rs_rso_above_1_0",
+          "cloud_factor_raw": 1.3260674700284802,
+          "cloud_factor_used": 1.0
+        },
+        "rns_mj_m2_day": 13.86,
+        "rnl_mj_m2_day": 7.262925154104536,
+        "rn_mj_m2_day": 6.597074845895463,
+        "tmean_c": 20.0,
+        "es_kpa": 2.531555539283911,
+        "ea_kpa": 1.001858425976152,
+        "vpd_kpa": 1.5296971133077588,
+        "delta_kpa_per_c": 0.14474018811241365,
+        "gamma_kpa_per_c": 0.0665,
+        "u2_used_m_s": 2.0,
+        "g_mj_m2_day": 0.0
+      },
+      "precipitation_mm": 4.0,
+      "stage": "development",
+      "kc": 1.1,
+      "etc_mm": 4.351419858552828,
+      "etc_reason_codes": [],
+      "etc_quality_flags": [
+        "cloud_ratio_bounded_asce2005",
+        "rs_rso_capped_at_1_per_equation_39"
+      ]
+    },
+    {
+      "date": "2025-01-03",
+      "et0_mm": 3.133356807195871,
+      "et0_status": "computed",
+      "et0_reason_codes": [],
+      "quality_flags": [
+        "cloud_ratio_bounded_asce2005",
+        "rs_rso_capped_at_1_per_equation_39"
+      ],
+      "cloud_correction": {
+        "policy": "fao56_pm_asce2005_cloud_bounds",
+        "rs_rso_raw": 1.1003259090909911,
+        "rs_rso_used": 1.0,
+        "bounded": true,
+        "reason": "rs_rso_above_1_0",
+        "cloud_factor_raw": 1.135439977272838,
+        "cloud_factor_used": 1.0
+      },
+      "inputs": {
+        "T2M_MIN": 11.0,
+        "T2M_MAX": 24.0,
+        "ALLSKY_SFC_SW_DWN": 16.0,
+        "WS2M": 2.0,
+        "T2MDEW": 7.0,
+        "PS": 100.0
+      },
+      "intermediates": {
+        "day_of_year": 3,
+        "ra_mj_m2_day": 19.336630691772058,
+        "daylight_hours": 10.029173063945228,
+        "rso_mj_m2_day": 14.541146280212587,
+        "rs_rso_raw": 1.1003259090909911,
+        "rs_rso_used": 1.0,
+        "cloud_correction": {
+          "policy": "fao56_pm_asce2005_cloud_bounds",
+          "rs_rso_raw": 1.1003259090909911,
+          "rs_rso_used": 1.0,
+          "bounded": true,
+          "reason": "rs_rso_above_1_0",
+          "cloud_factor_raw": 1.135439977272838,
+          "cloud_factor_used": 1.0
+        },
+        "rns_mj_m2_day": 12.32,
+        "rnl_mj_m2_day": 7.01538997310113,
+        "rn_mj_m2_day": 5.30461002689887,
+        "tmean_c": 17.5,
+        "es_kpa": 2.1483158081356937,
+        "ea_kpa": 1.001858425976152,
+        "vpd_kpa": 1.1464573821595416,
+        "delta_kpa_per_c": 0.12624095580151512,
+        "gamma_kpa_per_c": 0.0665,
+        "u2_used_m_s": 2.0,
+        "g_mj_m2_day": 0.0
+      },
+      "precipitation_mm": 0.0,
+      "stage": "mid",
+      "kc": 1.1,
+      "etc_mm": 3.4466924879154583,
+      "etc_reason_codes": [],
+      "etc_quality_flags": [
+        "cloud_ratio_bounded_asce2005",
+        "rs_rso_capped_at_1_per_equation_39"
+      ]
+    },
+    {
+      "date": "2025-01-04",
+      "et0_mm": 4.310286783967027,
+      "et0_status": "computed",
+      "et0_reason_codes": [],
+      "quality_flags": [
+        "cloud_ratio_bounded_asce2005",
+        "rs_rso_capped_at_1_per_equation_39"
+      ],
+      "cloud_correction": {
+        "policy": "fao56_pm_asce2005_cloud_bounds",
+        "rs_rso_raw": 1.3025128564353186,
+        "rs_rso_used": 1.0,
+        "bounded": true,
+        "reason": "rs_rso_above_1_0",
+        "cloud_factor_raw": 1.4083923561876803,
+        "cloud_factor_used": 1.0
+      },
+      "inputs": {
+        "T2M_MIN": 14.0,
+        "T2M_MAX": 28.0,
+        "ALLSKY_SFC_SW_DWN": 19.0,
+        "WS2M": 2.0,
+        "T2MDEW": 7.0,
+        "PS": 100.0
+      },
+      "intermediates": {
+        "day_of_year": 4,
+        "ra_mj_m2_day": 19.39785647564024,
+        "daylight_hours": 10.038647160636305,
+        "rso_mj_m2_day": 14.58718806968146,
+        "rs_rso_raw": 1.3025128564353186,
+        "rs_rso_used": 1.0,
+        "cloud_correction": {
+          "policy": "fao56_pm_asce2005_cloud_bounds",
+          "rs_rso_raw": 1.3025128564353186,
+          "rs_rso_used": 1.0,
+          "bounded": true,
+          "reason": "rs_rso_above_1_0",
+          "cloud_factor_raw": 1.4083923561876803,
+          "cloud_factor_used": 1.0
+        },
+        "rns_mj_m2_day": 14.63,
+        "rnl_mj_m2_day": 7.362361407047093,
+        "rn_mj_m2_day": 7.267638592952908,
+        "tmean_c": 21.0,
+        "es_kpa": 2.689267611710277,
+        "ea_kpa": 1.001858425976152,
+        "vpd_kpa": 1.6874091857341251,
+        "delta_kpa_per_c": 0.15275655991910123,
+        "gamma_kpa_per_c": 0.0665,
+        "u2_used_m_s": 2.0,
+        "g_mj_m2_day": 0.0
+      },
+      "precipitation_mm": 12.0,
+      "stage": "mid",
+      "kc": 1.1,
+      "etc_mm": 4.74131546236373,
+      "etc_reason_codes": [],
+      "etc_quality_flags": [
+        "cloud_ratio_bounded_asce2005",
+        "rs_rso_capped_at_1_per_equation_39"
+      ]
+    },
+    {
+      "date": "2025-01-05",
+      "et0_mm": 3.7790662522663716,
+      "et0_status": "computed",
+      "et0_reason_codes": [],
+      "quality_flags": [
+        "cloud_ratio_bounded_asce2005",
+        "rs_rso_capped_at_1_per_equation_39"
+      ],
+      "cloud_correction": {
+        "policy": "fao56_pm_asce2005_cloud_bounds",
+        "rs_rso_raw": 1.2298163690320838,
+        "rs_rso_used": 1.0,
+        "bounded": true,
+        "reason": "rs_rso_above_1_0",
+        "cloud_factor_raw": 1.3102520981933132,
+        "cloud_factor_used": 1.0
+      },
+      "inputs": {
+        "T2M_MIN": 12.0,
+        "T2M_MAX": 26.0,
+        "ALLSKY_SFC_SW_DWN": 18.0,
+        "WS2M": 2.0,
+        "T2MDEW": 7.0,
+        "PS": 100.0
+      },
+      "intermediates": {
+        "day_of_year": 5,
+        "ra_mj_m2_day": 19.46320671565358,
+        "daylight_hours": 10.048765104944511,
+        "rso_mj_m2_day": 14.636331450171493,
+        "rs_rso_raw": 1.2298163690320838,
+        "rs_rso_used": 1.0,
+        "cloud_correction": {
+          "policy": "fao56_pm_asce2005_cloud_bounds",
+          "rs_rso_raw": 1.2298163690320838,
+          "rs_rso_used": 1.0,
+          "bounded": true,
+          "reason": "rs_rso_above_1_0",
+          "cloud_factor_raw": 1.3102520981933132,
+          "cloud_factor_used": 1.0
+        },
+        "rns_mj_m2_day": 13.86,
+        "rnl_mj_m2_day": 7.164500127788849,
+        "rn_mj_m2_day": 6.69549987221115,
+        "tmean_c": 19.0,
+        "es_kpa": 2.38200185082476,
+        "ea_kpa": 1.001858425976152,
+        "vpd_kpa": 1.3801434248486077,
+        "delta_kpa_per_c": 0.13708266611218417,
+        "gamma_kpa_per_c": 0.0665,
+        "u2_used_m_s": 2.0,
+        "g_mj_m2_day": 0.0
+      },
+      "precipitation_mm": 2.0,
+      "stage": "late",
+      "kc": 0.4,
+      "etc_mm": 1.5116265009065488,
+      "etc_reason_codes": [],
+      "etc_quality_flags": [
+        "cloud_ratio_bounded_asce2005",
+        "rs_rso_capped_at_1_per_equation_39"
+      ]
+    }
+  ],
+  "et0": {
+    "total_mm": 18.65577699267328,
+    "observed_total_mm": 18.65577699267328,
+    "unit": "mm per period",
+    "days_available": 5,
+    "days_expected": 5,
+    "coverage_fraction": 1.0,
+    "status": "complete",
+    "reason_codes": []
+  },
+  "potential_etc": {
+    "total_mm": 15.09422358399736,
+    "observed_total_mm": 15.09422358399736,
+    "unit": "mm per period",
+    "days_available": 5,
+    "days_expected": 5,
+    "coverage_fraction": 1.0,
+    "status": "complete",
+    "reason_codes": []
+  },
+  "precipitation": {
+    "total_mm": 18.0,
+    "observed_total_mm": 18.0,
+    "unit": "mm per period",
+    "days_available": 5,
+    "days_expected": 5,
+    "coverage_fraction": 1.0,
+    "status": "complete",
+    "reason_codes": []
+  },
+  "coverage": {
+    "expected_days": 5,
+    "et0_days": 5,
+    "etc_days": 5,
+    "precipitation_days": 5,
+    "observations": {
+      "available_values": 45,
+      "expected_values": 45,
+      "complete_days": 5,
+      "coverage_fraction": 1.0
+    },
+    "cloud_ratio_bounded_days": 5,
+    "cloud_ratio_bounded_dates": [
+      "2025-01-01",
+      "2025-01-02",
+      "2025-01-03",
+      "2025-01-04",
+      "2025-01-05"
+    ],
+    "inputs": {
+      "T2M": {
+        "expected_days": 5,
+        "available_days": 5,
+        "fraction": 1.0,
+        "missing_dates": []
+      },
+      "T2M_MAX": {
+        "expected_days": 5,
+        "available_days": 5,
+        "fraction": 1.0,
+        "missing_dates": []
+      },
+      "T2M_MIN": {
+        "expected_days": 5,
+        "available_days": 5,
+        "fraction": 1.0,
+        "missing_dates": []
+      },
+      "RH2M": {
+        "expected_days": 5,
+        "available_days": 5,
+        "fraction": 1.0,
+        "missing_dates": []
+      },
+      "PRECTOTCORR": {
+        "expected_days": 5,
+        "available_days": 5,
+        "fraction": 1.0,
+        "missing_dates": []
+      },
+      "ALLSKY_SFC_SW_DWN": {
+        "expected_days": 5,
+        "available_days": 5,
+        "fraction": 1.0,
+        "missing_dates": []
+      },
+      "WS2M": {
+        "expected_days": 5,
+        "available_days": 5,
+        "fraction": 1.0,
+        "missing_dates": []
+      },
+      "T2MDEW": {
+        "expected_days": 5,
+        "available_days": 5,
+        "fraction": 1.0,
+        "missing_dates": []
+      },
+      "PS": {
+        "expected_days": 5,
+        "available_days": 5,
+        "fraction": 1.0,
+        "missing_dates": []
+      }
+    }
+  },
+  "elevation": {
+    "input": {
+      "value_m": 100,
+      "source": "Synthetic test elevation, not a verified height of this location",
+      "confirmed": true
+    },
+    "used_m": 100,
+    "verification": "user_asserted_not_independently_verified",
+    "reason_codes": []
+  },
+  "kc": {
+    "status": "user_assumption",
+    "reference_surface": "grass",
+    "scenario": {
+      "type": "user_defined",
+      "crop_id": "wheat",
+      "source": "Synthetic five-day test scenario; not agronomic guidance",
+      "acknowledge_assumptions": true,
+      "kc_initial": 0.3,
+      "kc_mid": 1.1,
+      "kc_end": 0.4,
+      "stage_lengths_days": {
+        "initial": 1,
+        "development": 1,
+        "mid": 2,
+        "late": 1
+      }
+    },
+    "reason_codes": [],
+    "curve_method": "FAO56_equation_66_single_grass_reference_kc"
+  },
+  "method": {
+    "name": "FAO-56 Penman-Monteith",
+    "equation": 6,
+    "timestep": "daily",
+    "policy": "fao56_pm_asce2005_cloud_bounds",
+    "cloud_bounds_reference": "https://content.mesonet.org/mesonet/site_files/ASCE_Evapotranspiration_Formula.pdf#page=30",
+    "cloud_bounds_scope": "Rs/Rso in Rnl cloud factor only; original Rs, Rso and Rns unchanged",
+    "reference_surface": "hypothetical_well_watered_short_grass",
+    "reference_height_m": 0.12,
+    "albedo": 0.23,
+    "surface_resistance_s_m": 70,
+    "mean_temperature": "(T2M_MAX + T2M_MIN) / 2; FAO-56 Eq.9",
+    "actual_vapour_pressure": "from T2MDEW; Eq.14",
+    "pressure": "observed NASA PS; no altitude fallback",
+    "soil_heat_flux_mj_m2_day": 0,
+    "soil_heat_flux_basis": "FAO56_Eq42_daily_reference_surface",
+    "low_observed_wind_floor_m_s": 0.5,
+    "rs_rso_lower_limit": 0.3,
+    "rs_rso_upper_limit": 1.0,
+    "unsupported_cases": "null for negative ET0, polar night or invalid Eq.39 factors",
+    "references": [
+      "https://www.fao.org/4/x0490e/x0490e06.htm",
+      "https://www.fao.org/4/x0490e/x0490e07.htm",
+      "https://www.fao.org/4/x0490e/x0490e08.htm",
+      "https://www.fao.org/4/x0490e/x0490e0b.htm",
+      "https://content.mesonet.org/mesonet/site_files/ASCE_Evapotranspiration_Formula.pdf#page=30"
+    ]
+  },
+  "input_parameters": [
+    {
+      "nasa_parameter": "T2M",
+      "parameter_id": "CLIM_001",
+      "unit": "°C",
+      "source_unit": "C",
+      "unit_status": "compatible",
+      "conversion_factor": 1.0,
+      "aggregation": "daily_mean",
+      "role": "context_only"
+    },
+    {
+      "nasa_parameter": "T2M_MAX",
+      "parameter_id": "CLIM_003",
+      "unit": "°C",
+      "source_unit": "C",
+      "unit_status": "compatible",
+      "conversion_factor": 1.0,
+      "aggregation": "daily_maximum",
+      "role": "et0_required"
+    },
+    {
+      "nasa_parameter": "T2M_MIN",
+      "parameter_id": "CLIM_002",
+      "unit": "°C",
+      "source_unit": "C",
+      "unit_status": "compatible",
+      "conversion_factor": 1.0,
+      "aggregation": "daily_minimum",
+      "role": "et0_required"
+    },
+    {
+      "nasa_parameter": "RH2M",
+      "parameter_id": "CLIM_008",
+      "unit": "%",
+      "source_unit": "%",
+      "unit_status": "compatible",
+      "conversion_factor": 1.0,
+      "aggregation": "daily_mean",
+      "role": "context_only"
+    },
+    {
+      "nasa_parameter": "PRECTOTCORR",
+      "parameter_id": "CLIM_007",
+      "unit": "mm/day",
+      "source_unit": "mm/day",
+      "unit_status": "compatible",
+      "conversion_factor": 1.0,
+      "aggregation": "daily_total",
+      "role": "precipitation"
+    },
+    {
+      "nasa_parameter": "ALLSKY_SFC_SW_DWN",
+      "parameter_id": "CLIM_009",
+      "unit": "MJ/m²/day",
+      "source_unit": "MJ/m^2/day",
+      "unit_status": "compatible",
+      "conversion_factor": 1.0,
+      "aggregation": "daily_total",
+      "role": "et0_required"
+    },
+    {
+      "nasa_parameter": "WS2M",
+      "parameter_id": "CLIM_011",
+      "unit": "m/s",
+      "source_unit": "m/s",
+      "unit_status": "compatible",
+      "conversion_factor": 1.0,
+      "aggregation": "daily_mean",
+      "role": "et0_required"
+    },
+    {
+      "nasa_parameter": "T2MDEW",
+      "parameter_id": null,
+      "unit": "°C",
+      "source_unit": "C",
+      "unit_status": "compatible",
+      "conversion_factor": 1.0,
+      "aggregation": "daily_mean",
+      "role": "et0_required"
+    },
+    {
+      "nasa_parameter": "PS",
+      "parameter_id": null,
+      "unit": "kPa",
+      "source_unit": "kPa",
+      "unit_status": "compatible",
+      "conversion_factor": 1.0,
+      "aggregation": "daily_mean",
+      "role": "et0_required"
+    }
+  ],
+  "nasa_daily": {
+    "schema_version": "1.0.0",
+    "location": {
+      "latitude": 31.25,
+      "longitude": 34.79
+    },
+    "period": {
+      "start": "2025-01-01",
+      "end": "2025-01-05"
+    },
+    "time_standard": "LST",
+    "time_standard_basis": "response_header",
+    "source": {
+      "name": "NASA_POWER_DAILY_AG",
+      "url": null,
+      "synthetic": true
+    },
+    "parameters": [
+      {
+        "parameter_id": "CLIM_001",
+        "nasa_parameter": "T2M",
+        "unit": "°C",
+        "source_unit": "C",
+        "unit_status": "compatible",
+        "conversion_factor": 1.0,
+        "aggregation": "daily_mean",
+        "values": [
+          {
+            "date": "2025-01-01",
+            "value": 19.1,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-02",
+            "value": 19.6,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-03",
+            "value": 18.2,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-04",
+            "value": 20.4,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-05",
+            "value": 19.7,
+            "missing_reason": null
+          }
+        ],
+        "ignored_date_keys": [],
+        "coverage": {
+          "expected_days": 5,
+          "available_days": 5,
+          "fraction": 1.0,
+          "missing_dates": []
+        }
+      },
+      {
+        "parameter_id": "CLIM_003",
+        "nasa_parameter": "T2M_MAX",
+        "unit": "°C",
+        "source_unit": "C",
+        "unit_status": "compatible",
+        "conversion_factor": 1.0,
+        "aggregation": "daily_maximum",
+        "values": [
+          {
+            "date": "2025-01-01",
+            "value": 25.0,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-02",
+            "value": 27.0,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-03",
+            "value": 24.0,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-04",
+            "value": 28.0,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-05",
+            "value": 26.0,
+            "missing_reason": null
+          }
+        ],
+        "ignored_date_keys": [],
+        "coverage": {
+          "expected_days": 5,
+          "available_days": 5,
+          "fraction": 1.0,
+          "missing_dates": []
+        }
+      },
+      {
+        "parameter_id": "CLIM_002",
+        "nasa_parameter": "T2M_MIN",
+        "unit": "°C",
+        "source_unit": "C",
+        "unit_status": "compatible",
+        "conversion_factor": 1.0,
+        "aggregation": "daily_minimum",
+        "values": [
+          {
+            "date": "2025-01-01",
+            "value": 12.0,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-02",
+            "value": 13.0,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-03",
+            "value": 11.0,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-04",
+            "value": 14.0,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-05",
+            "value": 12.0,
+            "missing_reason": null
+          }
+        ],
+        "ignored_date_keys": [],
+        "coverage": {
+          "expected_days": 5,
+          "available_days": 5,
+          "fraction": 1.0,
+          "missing_dates": []
+        }
+      },
+      {
+        "parameter_id": "CLIM_008",
+        "nasa_parameter": "RH2M",
+        "unit": "%",
+        "source_unit": "%",
+        "unit_status": "compatible",
+        "conversion_factor": 1.0,
+        "aggregation": "daily_mean",
+        "values": [
+          {
+            "date": "2025-01-01",
+            "value": 55.0,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-02",
+            "value": 53.0,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-03",
+            "value": 57.0,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-04",
+            "value": 50.0,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-05",
+            "value": 58.0,
+            "missing_reason": null
+          }
+        ],
+        "ignored_date_keys": [],
+        "coverage": {
+          "expected_days": 5,
+          "available_days": 5,
+          "fraction": 1.0,
+          "missing_dates": []
+        }
+      },
+      {
+        "parameter_id": "CLIM_007",
+        "nasa_parameter": "PRECTOTCORR",
+        "unit": "mm/day",
+        "source_unit": "mm/day",
+        "unit_status": "compatible",
+        "conversion_factor": 1.0,
+        "aggregation": "daily_total",
+        "values": [
+          {
+            "date": "2025-01-01",
+            "value": 0.0,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-02",
+            "value": 4.0,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-03",
+            "value": 0.0,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-04",
+            "value": 12.0,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-05",
+            "value": 2.0,
+            "missing_reason": null
+          }
+        ],
+        "ignored_date_keys": [],
+        "coverage": {
+          "expected_days": 5,
+          "available_days": 5,
+          "fraction": 1.0,
+          "missing_dates": []
+        }
+      },
+      {
+        "parameter_id": "CLIM_009",
+        "nasa_parameter": "ALLSKY_SFC_SW_DWN",
+        "unit": "MJ/m²/day",
+        "source_unit": "MJ/m^2/day",
+        "unit_status": "compatible",
+        "conversion_factor": 1.0,
+        "aggregation": "daily_total",
+        "values": [
+          {
+            "date": "2025-01-01",
+            "value": 17.0,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-02",
+            "value": 18.0,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-03",
+            "value": 16.0,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-04",
+            "value": 19.0,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-05",
+            "value": 18.0,
+            "missing_reason": null
+          }
+        ],
+        "ignored_date_keys": [],
+        "coverage": {
+          "expected_days": 5,
+          "available_days": 5,
+          "fraction": 1.0,
+          "missing_dates": []
+        }
+      },
+      {
+        "parameter_id": "CLIM_011",
+        "nasa_parameter": "WS2M",
+        "unit": "m/s",
+        "source_unit": "m/s",
+        "unit_status": "compatible",
+        "conversion_factor": 1.0,
+        "aggregation": "daily_mean",
+        "values": [
+          {
+            "date": "2025-01-01",
+            "value": 2.0,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-02",
+            "value": 2.0,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-03",
+            "value": 2.0,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-04",
+            "value": 2.0,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-05",
+            "value": 2.0,
+            "missing_reason": null
+          }
+        ],
+        "ignored_date_keys": [],
+        "coverage": {
+          "expected_days": 5,
+          "available_days": 5,
+          "fraction": 1.0,
+          "missing_dates": []
+        }
+      },
+      {
+        "parameter_id": null,
+        "nasa_parameter": "T2MDEW",
+        "unit": "°C",
+        "source_unit": "C",
+        "unit_status": "compatible",
+        "conversion_factor": 1.0,
+        "aggregation": "daily_mean",
+        "values": [
+          {
+            "date": "2025-01-01",
+            "value": 7.0,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-02",
+            "value": 7.0,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-03",
+            "value": 7.0,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-04",
+            "value": 7.0,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-05",
+            "value": 7.0,
+            "missing_reason": null
+          }
+        ],
+        "ignored_date_keys": [],
+        "coverage": {
+          "expected_days": 5,
+          "available_days": 5,
+          "fraction": 1.0,
+          "missing_dates": []
+        }
+      },
+      {
+        "parameter_id": null,
+        "nasa_parameter": "PS",
+        "unit": "kPa",
+        "source_unit": "kPa",
+        "unit_status": "compatible",
+        "conversion_factor": 1.0,
+        "aggregation": "daily_mean",
+        "values": [
+          {
+            "date": "2025-01-01",
+            "value": 100.0,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-02",
+            "value": 100.0,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-03",
+            "value": 100.0,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-04",
+            "value": 100.0,
+            "missing_reason": null
+          },
+          {
+            "date": "2025-01-05",
+            "value": 100.0,
+            "missing_reason": null
+          }
+        ],
+        "ignored_date_keys": [],
+        "coverage": {
+          "expected_days": 5,
+          "available_days": 5,
+          "fraction": 1.0,
+          "missing_dates": []
+        }
+      }
+    ]
+  },
+  "source": {
+    "name": "NASA_POWER_DAILY_AG",
+    "url": null,
+    "synthetic": true
+  },
+  "source_is_synthetic": true,
+  "actual_water_balance": null,
+  "limitations": [
+    "ET0 — эталонная испаряемость с условной хорошо увлажнённой травы; не измерение испарения на поле.",
+    "NASA POWER — региональные исторические данные; давление и высота источника могут отличаться от участка.",
+    "Высота с источником подтверждается пользователем, но не проверяется независимо; высоты по умолчанию нет.",
+    "Нет замены пропущенных наблюдений и нет автоматического перехода на другие формулы ET0.",
+    "Отношение Rs/Rso ограничивается до [0.3, 1.0] только в поправке облачности Rnl по ASCE-EWRI 2005; остальные коэффициенты FAO-56 сохранены. Это эмпирическая оценка, не измерение длинноволнового потока.",
+    "Kc и длины фаз — явный пользовательский сценарий, без автоматических дат, коэффициентов или климатических поправок.",
+    "Потенциальная ETc предполагает стандартные условия без водного стресса; это не фактическое водопотребление.",
+    "Осадки показаны отдельно: они не считаются полностью доступными растениям, разность осадков и ETc не является дефицитом поля.",
+    "Эффективные осадки, орошение, запасы воды, сток, просачивание и водный стресс не рассчитаны; actual_water_balance=null."
+  ],
+  "retrieved_from_cache": false
+}

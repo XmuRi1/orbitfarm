@@ -2,6 +2,8 @@
 
 NASA POWER climate assessment prototype with a Next.js frontend and Python backend. The crop scoring model and requirements remain exploratory and are not an agronomic recommendation.
 
+The integrated page follows **Участок → Климат и вода → Севооборот → Итоги** with one shared historical point/period/crop and explicit scenario assumptions. See [frontend orchestration and state checks](frontend/INTEGRATED_EXPERIENCE.md). No integrated scientific suitability score or future rotation-water forecast is produced.
+
 ## Repository layout
 
 ```text
@@ -62,6 +64,9 @@ FastAPI routes:
 | POST | `/api/nasa/assess` | Historical NASA observations and assessment |
 | GET | `/api/rotation/options` | Catalogue and example plans |
 | POST | `/api/rotation/compare` | Descriptive comparison of demo/custom plans |
+| POST | `/api/season/assess` | Daily historical climate for a user-defined growing season |
+| POST | `/api/water/assess` | Daily FAO-56 reference ET0 and explicit scenario potential ETc |
+| POST | `/api/root-zone/compare` | Two explicit historical root-zone water scenarios, not a measured field balance |
 
 `backend/api_server.py` is retained as the legacy stdlib diagnostic server on port 8765, including its old HTML dashboard and compatibility tests. It does not implement rotation routes and is not the backend for the Next.js application. Shared request validation lives in `backend/api_contracts.py`; FastAPI does not import the legacy server. Python implementation and tests live only in `backend/`.
 
@@ -72,6 +77,7 @@ From the repository root:
 ```powershell
 .\backend\.venv\Scripts\python.exe -B -m unittest discover -s backend/tests -v
 cd frontend
+node --test tests/season-proxy.test.mjs tests/water-proxy.test.mjs tests/root-zone-proxy.test.mjs tests/experience-state.test.mjs
 npm run lint
 npx tsc --noEmit --incremental false
 npm run build
@@ -79,7 +85,21 @@ cd ..
 .\backend\.venv\Scripts\python.exe -B backend/tests/smoke_local_stack.py
 ```
 
-The setup above installs `backend/requirements-test.txt` for ASGI tests. The smoke script requires the production frontend build and Node.js. It launches real FastAPI and Next.js processes on temporary loopback ports, checks all backend routes and the Next.js proxies (two custom plans, all three demos, historical context, `unknown` statuses, and error propagation), then stops its processes. It does not call live NASA: NASA input validation is checked without an upstream request. NASA success/failure and cache behavior are covered with mocks/fixtures in the Python suite.
+The setup above installs `backend/requirements-test.txt` for ASGI tests. The smoke script requires the production frontend build and Node.js. It launches real FastAPI and Next.js processes on temporary loopback ports, checks all backend routes and the Next.js proxies (two custom plans, all three demos, seasonal daily statistics/coverage, `unknown` statuses, and error propagation), then stops its processes. NASA is explicitly mocked by the test-only launcher for reproducible seasonal success, partial observations and upstream errors; no live NASA connection is claimed. Production has no fixture switch or synthetic fallback. Unit tests additionally cover cache persistence, units, dates and existing aggregate contracts.
+
+## Seasonal Climate Engine v1
+
+The compact **Сезонный анализ** section uses the selected point from the main form and explicitly entered crop/sowing/end dates. It shows actual daily-series statistics, coverage, source and limitations; it does not infer growth stages or calculate suitability. Both dates are included, up to 366 historical days. The existing aggregate analysis and Rotation Planner are unchanged.
+
+`POST /api/season/assess` is available through FastAPI and the same-path Next.js proxy. See [the JSON contract and completeness rules](backend/SEASONAL_API.md) and [the explicitly synthetic response example](backend/examples/season_assessment_fixture.json). Daily rows retain canonical parameter IDs and missing dates/units, with no interpolation. Full-season precipitation sums/counts remain unknown when days are missing. The raw NASA cache is reused; a normalized `.daily.json` cache is also saved best-effort.
+
+## Water Balance Engine v1
+
+The expandable **Баланс влаги в почве** section adds Root Zone Water Balance v1 Scenario Mode: explicit soil/root/initial-state assumptions, rainfed versus a user-entered net-irrigation schedule, daily depletion chart and RAW. It requires complete ET0, potential ETc and rain, retains `actual_water_balance=null`, and does not change rotation/scoring. See [ROOT_ZONE_API.md](backend/ROOT_ZONE_API.md) for the request, FAO-56 timing, conservation tests and conditional Beersheba example.
+
+The seasonal result includes a compact **Потребность в воде** block. It computes daily grass-reference ET0 using FAO-56 Penman–Monteith only when weather and a known, sourced, user-confirmed site elevation are available. Height is never defaulted to sea level or inferred from pressure. Optional Kc and four-stage lengths are entered in a collapsed, explicit user-scenario form; potential ETc remains unknown otherwise. No catalogue Kc or crop stage duration is assumed.
+
+`POST /api/water/assess` works through FastAPI and the same-path Next.js proxy. See [the method, full JSON contract and limitations](backend/WATER_API.md) and [synthetic fixture response](backend/examples/water_assessment_fixture.json). Water requests add WS2M, T2MDEW and PS with checked units. Versioned cache profiles distinguish original six-parameter and new nine-parameter requests. ET0, potential ETc and precipitation totals are separate; incomplete-period totals remain null. `actual_water_balance` always remains null. This is not a model of field water sufficiency or an irrigation recommendation.
 
 ## Vercel deployment: two Projects, one repository
 

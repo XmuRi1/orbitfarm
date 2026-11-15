@@ -1,6 +1,51 @@
 @import "tailwindcss";
 @import "leaflet/dist/leaflet.css";
 
+/* UX Polish v1: scoped layout and first-run guidance; original tokens unchanged. */
+.ux-polish .first-run { margin: 0 0 24px; padding: 22px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.ux-polish .first-run h2 { margin: 0 0 8px; font-size: 23px; color: var(--forest); }
+.ux-polish .first-run p { line-height: 1.65; }
+.ux-polish .first-run-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 20px; margin-top: 16px; }
+.ux-polish .own-site-link { display: inline-flex; gap: 8px; color: var(--forest); }
+.ux-polish .demo-consent { margin-top: 18px; }
+.ux-polish .demo-input-list { display: grid; gap: 8px; padding-left: 18px; line-height: 1.6; }
+.ux-polish .demo-confirmation { margin: 16px 0; padding: 14px; border: 1px solid var(--line); border-radius: 5px; background: var(--paper); }
+.ux-polish .dashboard-grid { display: block; }
+.ux-polish .control-rail > form { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 28px; }
+.ux-polish .control-rail > form > .form-section:first-child { grid-column: 1; grid-row: 1 / span 3; }
+.ux-polish .control-rail > form > .form-section:nth-child(2), .ux-polish .site-expert, .ux-polish .control-rail > form > .submit-button { grid-column: 2; }
+.ux-polish .control-rail > form > .submit-button { align-self: start; max-width: 320px; }
+.ux-polish .field-map, .ux-polish .field-map-loading { height: 290px; }
+.ux-polish .integrated-climate { border-top: 1px solid var(--line); }
+.ux-polish .scenario-context-note { padding: 10px 14px; background: #f8f2e5; color: #765a2c; border-left: 3px solid #c6934e; line-height: 1.5; }
+.ux-polish .water-journey { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; padding: 0; margin: 18px 0; list-style: none; }
+.ux-polish .water-journey li { padding: 12px; border: 1px solid var(--line); border-radius: 5px; background: var(--surface); }
+.ux-polish .water-journey strong, .ux-polish .water-journey span { display: block; font-size: 12px; line-height: 1.5; }
+.ux-polish .water-journey span { color: var(--muted); margin-top: 5px; }
+.ux-polish .readiness-note { margin: 14px 0; padding: 14px 16px; border-left: 3px solid #c6934e; background: #f8f2e5; line-height: 1.6; }
+.ux-polish .readiness-note ul { margin: 7px 0; padding-left: 18px; }
+.ux-polish .readiness-note button, .ux-polish .readiness-note a { display: inline-flex; margin: 5px 12px 0 0; color: var(--forest); }
+.ux-polish .scenario-settings { margin: 14px 0; }
+.ux-polish .calculation-state { margin: 12px 0; color: var(--forest); font-size: 12px; font-weight: 600; }
+.ux-polish button:disabled { cursor: not-allowed; opacity: 1; background: #e5e9e2; color: #66726a; border-color: #cdd5cb; box-shadow: none; transform: none; }
+.ux-polish .summary-plan-table { overflow-x: auto; margin: 16px 0; }
+.ux-polish .experience-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.ux-polish .summary-plan-table table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.ux-polish .summary-plan-table th, .ux-polish .summary-plan-table td { padding: 12px; text-align: left; border-bottom: 1px solid var(--line); line-height: 1.5; }
+@media (min-width: 1200px) { .ux-polish .season-metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 760px) {
+  .ux-polish .control-rail > form { grid-template-columns: 1fr; }
+  .ux-polish .control-rail > form > .form-section:first-child,
+  .ux-polish .control-rail > form > .form-section:nth-child(2), .ux-polish .site-expert,
+  .ux-polish .control-rail > form > .submit-button { grid-column: 1; grid-row: auto; }
+  .ux-polish .water-journey { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ux-polish .experience-summary-grid { grid-template-columns: 1fr; }
+  .ux-polish .first-run { padding: 16px; }
+  .ux-polish .first-run-actions { align-items: stretch; flex-direction: column; gap: 14px; }
+  .ux-polish .first-run-actions button { justify-content: center; }
+  .ux-polish .field-map, .ux-polish .field-map-loading { height: 230px; }
+}
+
 :root {
   --paper: #f3f5ef;
   --surface: #fbfcf8;
@@ -45,6 +90,30 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .brand > span:last-child > span { color: var(--forest); }
 .brand-mark { width: 31px; height: 31px; display: grid; place-items: center; color: var(--surface); background: var(--forest); border-radius: 9px 9px 9px 2px; }
 .topbar-meta { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 11px; }
+.journey-nav { position: sticky; top: 0; z-index: 1100; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; padding: 12px 0; background: var(--paper); border-top: 1px solid var(--line); }
+.journey-nav a { display: block; padding: 10px 12px; border: 1px solid var(--line); border-radius: 5px; text-decoration: none; color: var(--forest); background: var(--surface); font-size: 12px; }
+.journey-nav a:hover { border-color: var(--forest); }
+#site, #climate-water, #rotation-planner, #analysis-summary { scroll-margin-top: 78px; }
+.site-expert { margin-bottom: 18px; }
+.site-expert .form-section:first-of-type { padding-top: 15px; }
+.integrated-climate { padding-top: 25px; }
+.integrated-climate .season-section { margin: 0; padding: 0; border: 0; }
+.season-layout.integrated-season-layout { display: block; }
+.legacy-analysis { margin-top: 20px; }
+.experience-summary { padding: 28px 0; margin-top: 36px; border-top: 1px solid var(--line); }
+.experience-summary h2 { margin: 0; font-size: 25px; }
+.experience-summary-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin: 18px 0; }
+.experience-summary-grid article { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 18px; }
+.experience-summary-grid h3 { margin: 0 0 12px; color: var(--forest); font-size: 14px; }
+.experience-summary-grid ul { padding-left: 16px; margin: 0; }
+.experience-summary-grid p, .experience-summary-grid li { color: var(--muted); font-size: 12px; line-height: 1.65; overflow-wrap: anywhere; }
+.experience-summary-grid li + li { margin-top: 9px; }
+@media (max-width: 1000px) { .experience-summary-grid { grid-template-columns: 1fr; } }
+@media (max-width: 600px) {
+  .journey-nav { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; padding: 8px 0; }
+  .journey-nav a { font-size: 11px; padding: 9px; }
+  #site, #climate-water, #rotation-planner, #analysis-summary { scroll-margin-top: 110px; }
+}
 .service-dot { display: inline-block; flex: 0 0 auto; width: 7px; height: 7px; background: #64a77e; border-radius: 50%; box-shadow: 0 0 0 3px #e3efe2; }
 .topbar-divider { height: 16px; width: 1px; margin: 0 5px; background: var(--line); }
 .local-label, .eyebrow { font-family: var(--font-mono), monospace; font-size: 9px; font-weight: 500; letter-spacing: .08em; }
@@ -441,6 +510,108 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .rotation-actions .rotation-compare-button { min-width: 220px; }
 .rotation-examples-button { min-height: 39px; padding: 0 12px; font-size: 10px; }
 .rotation-options-loading { margin: 0; color: #7d897f; font-size: 11px; }
+
+.season-section { margin: 30px 0 34px; padding-top: 24px; border-top: 1px solid var(--line); }
+.season-layout { display: grid; grid-template-columns: minmax(270px, 300px) minmax(0, 1fr); align-items: start; gap: 28px; }
+.season-controls { min-width: 0; padding: 18px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); }
+.season-fields { min-width: 0; display: grid; gap: 13px; margin: 0; padding: 0; border: 0; }
+.season-fields .select-label { margin: 0; }
+.season-fields .field-hint { margin: 0; }
+.season-point { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding-top: 12px; border-top: 1px solid var(--line); color: var(--forest); font-family: var(--font-mono), monospace; font-size: 11px; }
+.season-point small { width: 100%; margin-left: 20px; color: var(--muted); font-family: var(--font-display), sans-serif; font-size: 10px; }
+.season-submit { justify-self: start; width: fit-content; max-width: 100%; min-height: 40px; }
+.season-submit:disabled { cursor: default; }
+.season-results { min-width: 0; }
+.season-results > .error-message { margin-top: 0; }
+.season-results .error-message strong { display: block; margin-bottom: 5px; }
+.season-results .error-message p { margin: 0; }
+.season-state { min-height: 270px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 30px; border: 1px dashed var(--line); border-radius: 7px; color: var(--forest); text-align: center; }
+.season-state h3 { margin: 0; color: var(--ink); font-size: 18px; font-weight: 550; }
+.season-state p { max-width: 370px; margin: 0; color: var(--muted); font-size: 12px; line-height: 1.65; }
+.season-state .data-count { line-height: 1.6; }
+.season-coverage { display: flex; gap: 14px; justify-content: space-between; align-items: center; margin-top: 17px; color: var(--forest-dark); }
+.season-coverage > div { display: grid; gap: 5px; }
+.season-coverage > div strong { font-size: 12px; font-weight: 650; }
+.season-coverage span { color: var(--muted); font-size: 11px; line-height: 1.5; }
+.season-coverage > strong { font-family: var(--font-mono), monospace; font-size: 22px; font-weight: 500; }
+.season-coverage-note { margin: 5px 0 14px; }
+.season-metrics .metric-cell { min-width: 0; min-height: 132px; }
+.season-metrics .metric-value { font-size: 21px; }
+.season-metrics .metric-value small { display: block; margin-top: 5px; }
+.season-metrics .season-partial, .season-metrics .season-metric-reason { margin-bottom: 0; font-size: 10px; line-height: 1.5; }
+.season-detail-body { padding: 0 0 14px; color: var(--muted); font-size: 11px; line-height: 1.6; }
+.season-series-select { max-width: 280px; margin-top: 12px; }
+.season-daily { max-height: 260px; overflow: auto; border: 1px solid var(--line); border-radius: 5px; }
+.season-daily table { width: 100%; border-collapse: collapse; text-align: left; font-size: 11px; }
+.season-daily th { position: sticky; top: 0; color: var(--forest); background: var(--surface); font-weight: 600; }
+.season-daily th, .season-daily td { padding: 8px 10px; border-bottom: 1px solid var(--line); }
+.season-daily td:first-child { white-space: nowrap; font-family: var(--font-mono), monospace; font-size: 10px; }
+.season-requirement { padding-top: 12px; }
+.season-requirement strong { color: var(--forest); font-family: var(--font-mono), monospace; }
+.season-requirement p { margin: 4px 0 0; }
+.season-limitations { display: grid; gap: 7px; margin: 0; padding: 0 0 15px 16px; color: var(--muted); font-size: 11px; line-height: 1.55; }
+.season-date-note { margin: 18px 0 0; }
+.season-date-note > svg { flex-shrink: 0; color: var(--rust); }
+.water-section { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--line); }
+.water-controls { margin-top: 16px; gap: 12px; }
+.water-elevation-fields { display: grid; grid-template-columns: minmax(110px, .5fr) minmax(0, 1fr); gap: 10px; }
+.water-check { display: flex; align-items: start; gap: 8px; color: var(--muted); font-size: 11px; line-height: 1.5; }
+.water-check input { flex: 0 0 auto; margin: 2px 0 0; accent-color: var(--forest); }
+.water-scenario { margin: 0; }
+.water-scenario .season-detail-body { display: grid; gap: 12px; }
+.water-kc-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.water-result { margin-top: 18px; }
+.water-result .field-hint { overflow-wrap: anywhere; }
+.water-result .result-meta { align-items: center; }
+.water-result .result-meta a { display: inline-flex; align-items: center; gap: 4px; color: var(--forest); }
+.water-result .result-meta button { margin-left: auto; }
+.root-zone-section .season-detail-body { overflow-wrap: anywhere; }
+.root-zone-event { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 10px; align-items: end; }
+.root-zone-event > button { margin-bottom: 8px; }
+.root-zone-add { justify-self: start; }
+.root-zone-result { margin-top: 18px; }
+.root-zone-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border: 1px solid var(--line); }
+.root-zone-cards h4 { margin: 0 0 12px; color: var(--forest); font-size: 14px; }
+.root-zone-cards p { font-size: 12px; line-height: 1.6; }
+.root-zone-figure { margin: 18px 0; }
+.root-zone-figure figcaption { font-size: 12px; color: var(--forest); }
+.root-zone-chart { overflow-x: auto; }
+.root-zone-chart svg { display: block; width: 100%; min-width: 480px; }
+.root-zone-chart text { font-size: 11px; fill: var(--muted); }
+.root-zone-grid { stroke: var(--line); }
+.root-zone-raw { stroke: var(--muted); stroke-dasharray: 5 5; }
+.root-zone-rainfed, .root-zone-irrigated { fill: none; stroke-width: 2; stroke-linejoin: round; }
+.root-zone-rainfed { stroke: var(--rust); }
+.root-zone-irrigated { stroke: var(--forest); }
+.root-zone-key-a { color: var(--rust); }
+.root-zone-key-b { color: var(--forest); }
+@media (max-width: 600px) {
+  .root-zone-cards { grid-template-columns: 1fr; }
+  .root-zone-event { grid-template-columns: minmax(0, 1fr); }
+  .root-zone-event > button { justify-self: end; }
+}
+@media (max-width: 600px) {
+  .water-elevation-fields, .water-kc-fields { grid-template-columns: 1fr; }
+  .water-result > .metric-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 1000px) {
+  .season-layout { grid-template-columns: minmax(240px, 270px) minmax(0, 1fr); gap: 20px; }
+  .season-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .season-fields .coordinate-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 760px) {
+  .season-layout { grid-template-columns: 1fr; gap: 20px; }
+  .season-fields .coordinate-grid { max-width: 420px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .season-state { min-height: 210px; padding: 24px 18px; }
+  .season-section .source-banner span { line-height: 1.5; }
+}
+@media (max-width: 420px) {
+  .season-metrics { grid-template-columns: 1fr; }
+  .season-fields .coordinate-grid { grid-template-columns: 1fr; }
+  .season-metrics .metric-cell { min-height: 115px; }
+  .season-results .section-title-row { align-items: start; }
+  .season-submit { white-space: normal; text-align: left; }
+}
 @media (max-width: 760px) {
   .rotation-editor-grid { grid-template-columns: 1fr; }
   .rotation-example-list { grid-template-columns: 1fr; }

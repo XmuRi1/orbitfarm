@@ -2,6 +2,8 @@
 
 Next.js App Router frontend for the OrbitFarm NASA POWER assessment API.
 
+Integrated Experience v1 uses four connected sections: **Участок → Климат и вода → Севооборот → Итоги**. Shared context, invalidation rules, response reuse, deterministic explanations and state/HTTP checks are documented in [INTEGRATED_EXPERIENCE.md](INTEGRATED_EXPERIENCE.md). Scientific engines and existing server contracts are unchanged.
+
 ## Requirements
 
 - Node.js 20.9 or newer
@@ -39,7 +41,15 @@ Open http://localhost:3000.
 
 `GET /api/rotation/options` and `POST /api/rotation/compare` forward to the same paths on FastAPI. The planner supports two user-defined three-season plans and the original three demo plans. Results remain descriptive with no rotation score; future climate suitability remains `unknown`. The legacy stdlib server on port 8765 does not support these routes.
 
-Run `npm run lint`, `npx tsc --noEmit --incremental false`, and `npm run build` here. After building, run `backend/tests/smoke_local_stack.py` with the backend venv from the repository root for an HTTP test of the complete local stack; see the root README.
+`POST /api/season/assess` forwards to the same FastAPI path. **Сезонный анализ** uses the shared site/crop/historical-date form, displaying daily historical statistics, coverage, nullable values, catalogue limitations and JSON export. It does not assume sowing dates or growth stages. See the [seasonal JSON contract](../backend/SEASONAL_API.md). Rainfall totals/counts are unknown for incomplete seasons; partial means/extremes are labelled. Both endpoints that fetch NASA share the backend quota; the seasonal proxy forwards `Retry-After`.
+
+`POST /api/water/assess` proxies the independent water-demand endpoint. The seasonal result's **Потребность в воде** block asks for known site elevation/source and optional user-assumption Kc/stage lengths. It shows daily/period ET0, separate precipitation and conditional potential ETc; `null` and missing-input reasons remain explicit. Daily data are in a bounded, collapsed table. No field water deficit or actual soil balance is claimed. See [WATER_API.md](../backend/WATER_API.md). All three NASA routes share a quota; this proxy also forwards `Retry-After` and distinguishes routing 404 from NASA failures.
+
+`POST /api/root-zone/compare` proxies explicit root-zone scenarios. The water block's collapsed **Баланс влаги в почве** section accepts soil/root/initial-state assumptions and a net-irrigation calendar; it compares two cards and daily Dr curves with RAW. Submission requires complete ET0, ETc and rain plus valid acknowledged scenario inputs. No soil/crop defaults are inserted. It remains a model, with `actual_water_balance=null`. See [ROOT_ZONE_API.md](../backend/ROOT_ZONE_API.md).
+
+Run `node --test tests/*.test.mjs`, `npm run lint`, `npx tsc --noEmit --incremental false`, and `npm run build` here. After building, run `backend/tests/smoke_local_stack.py` with the backend venv from the repository root for an HTTP test of the complete local stack; see the root README. The additional integrated production HTTP workflow is documented in [INTEGRATED_EXPERIENCE.md](INTEGRATED_EXPERIENCE.md).
+
+The first screen offers **Попробовать на примере Беэр-Шевы**, with explicit grouped confirmation of conditional SRTM elevation and test Kc/soil/irrigation inputs before existing APIs are called. Results are calculated server-side from genuine NASA observations, never hardcoded. The own-site path remains available. Compatible water/soil drafts survive seasonal reruns; context changes invalidate results and affected acknowledgements. See [UX_POLISH.md](UX_POLISH.md) for state handling, demo verification and remaining desktop/mobile checks.
 
 ## Result semantics
 

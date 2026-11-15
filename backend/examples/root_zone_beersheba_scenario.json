@@ -1,0 +1,61 @@
+{
+  "crop_id": "wheat",
+  "latitude": 31.25,
+  "longitude": 34.79,
+  "sowing_date": "2025-01-01",
+  "end_date": "2025-03-31",
+  "elevation": {
+    "value_m": 288.0,
+    "source": "DEM estimate, not site survey: SRTM v3 30m, EGM96, Open Topo Data. https://api.opentopodata.org/v1/srtm30m?locations=31.25,34.79&interpolation=bilinear",
+    "confirmed": true
+  },
+  "kc_scenario": {
+    "type": "user_defined",
+    "reference_surface": "grass",
+    "crop_id": "wheat",
+    "source": "Explicit 90-day verification assumptions; no validated crop-specific recommendation",
+    "acknowledge_assumptions": true,
+    "kc_initial": 0.3,
+    "kc_mid": 1.1,
+    "kc_end": 0.4,
+    "stage_lengths_days": {
+      "initial": 20,
+      "development": 25,
+      "mid": 25,
+      "late": 20
+    }
+  },
+  "soil": {
+    "theta_fc": 0.3,
+    "theta_wp": 0.12,
+    "theta_unit": "m3/m3",
+    "zr_m": 0.6,
+    "p": 0.5,
+    "source": "TEST SCENARIO ONLY: soil/root/p/initial assumptions, not measured Beersheba properties",
+    "acknowledge_assumptions": true
+  },
+  "initial_depletion": {
+    "fraction_of_taw": 0.25
+  },
+  "irrigation": [
+    {
+      "date": "2025-01-15",
+      "net_mm": 25
+    },
+    {
+      "date": "2025-02-15",
+      "net_mm": 25
+    },
+    {
+      "date": "2025-03-15",
+      "net_mm": 25
+    }
+  ],
+  "assumptions": {
+    "runoff_zero": true,
+    "capillary_rise_zero": true,
+    "full_rain_infiltration": true,
+    "wetting_before_et": true,
+    "same_day_drainage": true
+  }
+}

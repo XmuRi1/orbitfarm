@@ -17,6 +17,9 @@ from api_contracts import CROPS, _validate_assess_body
 from live_pipeline import NASAUpstreamError, assess_nasa
 from rotation_engine import compare_rotation_plans, get_rotation_options
 from scoring import score_all_crops
+from seasonal_engine import assess_season, validate_season_request
+from water_balance import assess_water, validate_water_request
+from root_zone_balance import IncompleteRootZoneInputs, compare_root_zone, validate_root_zone_request
 
 MAX_REQUEST_BYTES = 500_000
 RATE_WINDOW_SECONDS = 60.0
@@ -220,5 +223,76 @@ async def rotation_compare(request: Request):
         )
     except RequestInputError as exc:
         return _error(exc.code, exc.detail, exc.status_code)
+    except (ValueError, KeyError, TypeError) as exc:
+        return _error("invalid_input", str(exc), 400)
+
+
+@app.post("/api/season/assess")
+async def season_assess(request: Request):
+    try:
+        body = await _json_object(request)
+        validate_season_request(body)
+    except RequestInputError as exc:
+        return _error(exc.code, exc.detail, exc.status_code)
+    except (ValueError, KeyError, TypeError) as exc:
+        return _error("invalid_input", str(exc), 400)
+    # Share the NASA quota with the existing assessment route.
+    retry_after = nasa_rate_limiter.consume(_client_key(request))
+    if retry_after is not None:
+        return _error("rate_limited", "Too many NASA requests. Try again later.", 429,
+                      {"Retry-After": str(retry_after)})
+    try:
+        return await run_in_threadpool(assess_season, body)
+    except (NASAUpstreamError, URLError, HTTPError, TimeoutError, OSError, RuntimeError) as exc:
+        return JSONResponse({"error": "nasa_upstream_unavailable", "detail": str(exc),
+                             "used_synthetic_fallback": False}, status_code=502)
+    except (ValueError, KeyError, TypeError) as exc:
+        return _error("invalid_input", str(exc), 400)
+
+
+@app.post("/api/water/assess")
+async def water_assess(request: Request):
+    try:
+        body = await _json_object(request)
+        validate_water_request(body)
+    except RequestInputError as exc:
+        return _error(exc.code, exc.detail, exc.status_code)
+    except (ValueError, KeyError, TypeError) as exc:
+        return _error("invalid_input", str(exc), 400)
+    retry_after = nasa_rate_limiter.consume(_client_key(request))
+    if retry_after is not None:
+        return _error("rate_limited", "Too many NASA requests. Try again later.", 429,
+                      {"Retry-After": str(retry_after)})
+    try:
+        return await run_in_threadpool(assess_water, body)
+    except (NASAUpstreamError, URLError, HTTPError, TimeoutError, OSError, RuntimeError) as exc:
+        return JSONResponse({"error": "nasa_upstream_unavailable", "detail": str(exc),
+                             "used_synthetic_fallback": False}, status_code=502)
+    except (ValueError, KeyError, TypeError) as exc:
+        return _error("invalid_input", str(exc), 400)
+
+
+@app.post("/api/root-zone/compare")
+async def root_zone_compare(request: Request):
+    """Compare two explicit soil-water scenarios, never a measured field balance."""
+    try:
+        body = await _json_object(request)
+        validate_root_zone_request(body)
+    except RequestInputError as exc:
+        return _error(exc.code, exc.detail, exc.status_code)
+    except (ValueError, KeyError, TypeError) as exc:
+        return _error("invalid_input", str(exc), 400)
+    retry_after = nasa_rate_limiter.consume(_client_key(request))
+    if retry_after is not None:
+        return _error("rate_limited", "Too many NASA requests. Try again later.", 429,
+                      {"Retry-After": str(retry_after)})
+    try:
+        return await run_in_threadpool(compare_root_zone, body)
+    except IncompleteRootZoneInputs as exc:
+        return JSONResponse({"error": "root_zone_inputs_incomplete", "detail": str(exc),
+                             "missing_requirements": exc.reasons, "coverage": exc.coverage}, status_code=422)
+    except (NASAUpstreamError, URLError, HTTPError, TimeoutError, OSError, RuntimeError) as exc:
+        return JSONResponse({"error": "nasa_upstream_unavailable", "detail": str(exc),
+                             "used_synthetic_fallback": False}, status_code=502)
     except (ValueError, KeyError, TypeError) as exc:
         return _error("invalid_input", str(exc), 400)
